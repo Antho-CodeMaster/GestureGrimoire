@@ -3,8 +3,8 @@
 
 // Initialize Network related variables
 let socket;
-let roomId          = null;
-let id              = null;
+let roomId = null;
+let id = null;
 
 // Process URL
 // Used to process the room ID. In order to specify a room ID,
@@ -21,19 +21,19 @@ function _processUrl() {
 
 // Send data from client to host via server
 function sendData(datatype, data) {
-  data.type   = datatype;
+  data.type = datatype;
   data.roomId = roomId;
-  
+
   socket.emit('sendData', data);
 }
 
 // Displays a message while attempting connection
 function _displayWaiting() {
   push();
-    fill(200);
-    textAlign(CENTER, CENTER);
-    textSize(20);
-    text("Attempting connection...", width/2, height/2-10);
+  fill(200);
+  textAlign(CENTER, CENTER);
+  textSize(20);
+  text("Attempting connection...", width / 2, height / 2 - 10);
   pop();
 }
 
@@ -41,7 +41,7 @@ function _displayWaiting() {
 // HOST
 
 // Initialize Network related variables
-let hostConnected   = false;
+let hostConnected = false;
 
 function setupHost() {
   _processUrl();
@@ -50,9 +50,9 @@ function setupHost() {
   if (local) { addr = serverIp + ':' + serverPort; }
   socket = io.connect(addr);
 
-  socket.emit('join', {name: 'host', roomId: roomId});
+  socket.emit('join', { name: 'host', roomId: roomId });
 
-  socket.on('id', function(data) {
+  socket.on('id', function (data) {
     id = data;
     console.log("id: " + id);
   });
@@ -63,7 +63,7 @@ function setupHost() {
   socket.on('receiveData', onReceiveData);
 }
 
-function isHostConnected(display=false) {
+function isHostConnected(display = false) {
   if (!hostConnected) {
     if (display) { _displayWaiting(); }
     return false;
@@ -71,10 +71,10 @@ function isHostConnected(display=false) {
   return true;
 }
 
-function onHostConnect (data) {
+function onHostConnect(data) {
   console.log("Host connected to server.");
   hostConnected = true;
-  
+
   if (roomId === null || roomId === 'undefined') {
     roomId = data.roomId;
   }
@@ -83,9 +83,9 @@ function onHostConnect (data) {
 // Displays server address in lower left of screen
 function displayAddress() {
   push();
-    fill(255);
-    textSize(50);
-    text(serverIp+"/?="+roomId, 10, height-50);
+  fill(255);
+  textSize(50);
+  text(serverIp + "/?=" + roomId, 10, height - 50);
   pop();
 }
 
@@ -93,8 +93,8 @@ function displayAddress() {
 // CLIENT
 
 // Initialize Network related variables
-let waiting         = true;
-let connected       = false;
+let waiting = true;
+let connected = false;
 
 function setupClient() {
   _processUrl();
@@ -104,19 +104,19 @@ function setupClient() {
   if (local) { addr = serverIp + ':' + serverPort; }
   socket = io.connect(addr);
 
-  socket.emit('join', {name: 'client', roomId: roomId});
+  socket.emit('join', { name: 'client', roomId: roomId });
 
-  socket.on('id', function(data) {
+  socket.on('id', function (data) {
     id = data;
     console.log("id: " + id);
   });
 
-  socket.on('found', function(data) {
+  socket.on('found', function (data) {
     connected = data.status;
     waiting = false;
     console.log("connected: " + connected);
   })
-  
+
   socket.emit('clientConnect', {
     roomId: roomId
   });
@@ -124,11 +124,11 @@ function setupClient() {
   socket.on('receiveData', onReceiveData);
 }
 
-function isClientConnected(display=false) {
+function isClientConnected(display = false) {
   if (waiting) {
     if (display) { _displayWaiting(); }
     return false;
-  } 
+  }
   else if (!connected) {
     if (display) { _displayInstructions(); }
     return false;
@@ -141,10 +141,10 @@ function isClientConnected(display=false) {
 // for correct link.
 function _displayInstructions() {
   push();
-    fill(200);
-    textAlign(CENTER, CENTER);
-    textSize(20);
-    text("Please enter the link at the", width/2, height/2-10);
-    text("bottom of the host screen.", width/2, height/2+10);
+  fill(200);
+  textAlign(CENTER, CENTER);
+  textSize(20);
+  text("Please enter the link at the", width / 2, height / 2 - 10);
+  text("bottom of the host screen.", width / 2, height / 2 + 10);
   pop();
 }
