@@ -31,6 +31,12 @@ let joystickRes = 4;
 let thisJ       = {x: 0, y: 0};
 let prevJ       = {x: 0, y: 0};
 
+//initialize hand-related vars
+let video;
+let handPose;
+let hands=[];
+let possibleGangSigns = []; // [{fingers:[], active:{right:false,left:false}}]
+
 // Initialize Game related variables
 let playerColor;
 let playerColorDim;
@@ -38,7 +44,16 @@ let playerColorDim;
 // <----
 
 function preload() {
+  handPose = ml5.handPose({flipped: true});
   setupClient();
+}
+
+function mousePressed() {
+  console.log(hands);
+}
+
+function gotHands(results){
+  hands = results;
 }
 
 function setup() {
@@ -46,10 +61,14 @@ function setup() {
 
   // Client setup here. ---->
   
-  gui = createGui();
+  //gui = createGui();
 
   setPlayerColors();
-  setupUI();
+
+  video = createCapture(VIDEO);
+  video.hide();
+  handPose.detectStart(video, gotHands);
+  //setupUI();
 
   // <----
 
@@ -64,6 +83,8 @@ function setup() {
 
      Use `type` to classify message types for host.
   */
+  possibleGangSigns.push({fingers:[0,4], active:{right:false,left:false}}, {fingers:[1,4], active:{right:false,left:false}});
+
   sendData('playerColor', { 
     r: red(playerColor)/255,
     g: green(playerColor)/255,
@@ -80,9 +101,42 @@ function draw() {
 
   if(isClientConnected(display=true)) {
     // Client draw here. ---->
+    translate(video.width, 0);
+    scale(-1,1)
+    image(video,0,0);
 
-    drawGui();
+    //drawGui();
+    if(hands.length > 0){
+      for (let hand of hands){
+        let thumb = hand.thumb_tip;
+        let index = hand.index_finger_tip;
+        let middle = hand.middle_finger_tip;
+        let ring = hand.ring_finger_tip;
+        let pinky = hand.pinky_finger_tip;
+        let fingers = [index, middle, ring, pinky, thumb];
 
+        for(let i = 0; i < possibleGangSigns.length ; i++){
+          let signFinger = possibleGangSigns[i].fingers;
+          let handness = hand.handedness;
+
+          let d = dist(fingers[signFinger[0]].x, fingers[signFinger[0]].y,fingers[signFinger[1]].x,fingers[signFinger[1]].y);
+
+          if (d < 30 && !possibleGangSigns[i].active.right && handness == 'Right'){
+            console.log(i + ' ' + handness);
+            possibleGangSigns[i].active.right = true;
+          }else if(d>30 && handness == 'Right'){
+            possibleGangSigns[i].active.right = false;
+          }
+
+          if (d < 30 && !possibleGangSigns[i].active.left && handness == 'Left'){
+            console.log(i + ' ' + handness);
+            possibleGangSigns[i].active.left = true;
+          }else if(d>30 && handness == 'Left'){
+            possibleGangSigns[i].active.left = false;
+          }
+        }
+      }
+    }
     // <---
   }
 }
