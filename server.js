@@ -45,13 +45,12 @@ let socket = require('socket.io');
 
 // Connect it to the web server
 let io = socket(server);
+setupDB();  // connect to db
 
 ////////////
 // Setup a connection
 io.sockets.on('connection', newConnection);
 function newConnection(socket) {
-
-  setupDB();  // connect to db
 
   // Inform incoming connection of its ID
   console.log('\n' + socket.id + ' is attempting connection...');
