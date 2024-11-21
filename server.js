@@ -10,29 +10,79 @@ let app = express();
 let port = Number(process.env.PORT || 3000);
 let server = app.listen(port);
 let mysql = require('mysql');
-
+var db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "gesture_grimoire"
+});
 
 // database mysql
-function setupDB() {
-  var db = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "gesture_grimoire"
-  });
-
+async function setupDB() {
   db.connect(function (err) {
     if (err) throw err;
     console.log("Connected to mysql!");
   });
 
- /* db.query("SELECT * FROM spell", (err, results) => {
-    if (err) throw err;
-    console.log(results);
-    
-  });*/
-  
+  /* EXEMPLE -select-
+  const resultGet = await getFromTable("spell", "name, target_is_self");  //variables : (table, column) (si tu ne mets pas de colonnes, tu les selectes toutes)
+  console.log("///", resultGet);
+  const resultGetAll = await getFromTable("spell");  //variables : (table, column) (si tu ne mets pas de colonnes, tu les selectes toutes)
+  console.log("///", resultGetAll);*/
 
+  /* EXEMPLE -insert-
+  const resultInsert = await insertIntoTable("player", "color, hp, shield", "'pink', '88', '43'");  //variables : (table, columns, values)
+  console.log("///", resultInsert);*/
+
+  /* EXEMPLE -update- 
+  const resultUpdate = await updateTable("player", "color", "'blue'", "hp = 88"); //variables : (table, column, newvalue, where)
+  console.log("///", resultUpdate);*/
+
+}
+
+function getFromTable(table, column = '*') {
+  var req = "SELECT " + column + " FROM " + table;
+
+  return new Promise((resolve, reject) => {
+    db.query(req, (err, result) => {
+      if (err) {
+        reject(err);
+      }
+      else {
+        resolve(result);
+      }
+    });
+  });
+}
+
+function insertIntoTable(table, columns, values) {
+  var req = "INSERT INTO " + table + "(" + columns + ") VALUES (" + values + ")";
+
+  return new Promise((resolve, reject) => {
+    db.query(req, (err, result) => {
+      if (err) {
+        reject(err);
+      }
+      else {
+        resolve(result);
+      }
+    });
+  });
+}
+
+function updateTable(table, column, newvalue, where) {
+  var req = "UPDATE " + table + " SET " + column + " = " + newvalue + " WHERE " + where;
+
+  return new Promise((resolve, reject) => {
+    db.query(req, (err, result) => {
+      if (err) {
+        reject(err);
+      }
+      else {
+        resolve(result);
+      }
+    });
+  });
 }
 
 
