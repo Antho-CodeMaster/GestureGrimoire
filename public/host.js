@@ -15,6 +15,7 @@ Run http-server -c-1 -p80 to start server on open port 80.
 // Network Settings
 // const serverIp      = 'https://yourservername.herokuapp.com';
 // const serverIp      = 'https://yourprojectname.glitch.me';
+const { getFromTable } = require('./server.js');
 const serverIp = '127.0.0.1';
 const serverPort = '3000';
 const local = true;   // true if running locally, false
@@ -106,6 +107,9 @@ function onReceiveData(data) {
   else if (data.type === 'playerColor') {
     game.setColor(data.id, data.r * 255, data.g * 255, data.b * 255);
   }
+  else if (data.type === 'potentialSpell') {
+    processSpell(data);
+  }
 
   // <----
 
@@ -146,6 +150,25 @@ function processButton(data) {
     console.log(data.id + ': ' +
       data.button);
   }
+}
+
+async function processSpell(data) {
+  QueryFirstCon = 'pos_gauche = ' + data['Left'];
+  QuerySecondCon = ' AND pos_droite = ' + data['Right'];
+  QueryBuild = QueryFirstCon + QuerySecondCon;
+  
+  resultGet = await getFromTable('spell', '*', QueryBuild);
+
+  if (resultGet.length > 0) {
+    console.log(resultGet);
+  }
+  else {
+    console.log("Something went wrong chief!");
+  }
+  
+  //potentialSpell['Right'];
+  //potentialSpell['Left'];
+  //sendData('potentialSpell', potentialSpell);
 }
 
 ////////////
