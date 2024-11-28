@@ -58,10 +58,6 @@ function getFromTable(table, column = '*', where = '') {
   });
 }
 
-module.exports = {
-  getFromTable,
-};
-
 function insertIntoTable(table, columns, values) {
   var req = "INSERT INTO " + table + "(" + columns + ") VALUES (" + values + ")";
 
