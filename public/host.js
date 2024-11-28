@@ -25,14 +25,11 @@ const local = true;   // true if running locally, false
 const velScale = 10;
 const debug = true;
 let game;
+
 // <----
-let player1;
-let player2;
 
 function preload() {
-  setupHost();
-  player1 = loadImage('img/wizard1.png');
-  player2 = loadImage('img/wizard2.png');
+  setupHost();  
 }
 
 function setup() {
@@ -152,22 +149,35 @@ function processButton(data) {
 }
 
 async function processSpell(data) {
-  QueryFirstCon = 'pos_gauche = ' + data.Left;
-  QuerySecondCon = ' AND pos_droite = ' + data.Right;
+  QueryFirstCon = 'pos_gauche = ' + data['Left'];
+  QuerySecondCon = ' AND pos_droite = ' + data['Right'];
   QueryBuild = QueryFirstCon + QuerySecondCon;
   
-  resultGet = await getFromTable('spell', '*', QueryBuild);
+  try {
+    // Send a POST request to the server to fetch data
+    const response = await fetch('http://127.0.0.1:3000/api/getFromTable', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        table: 'spell',
+        column: '*',
+        where: QueryBuild,
+      }),
+    });
 
-  if (resultGet.length > 0) {
-    console.log(resultGet);
+    // Parse the JSON response
+    const result = await response.json();
+
+    if (result.success && result.data.length > 0) {
+      console.log(result.data);
+    } else {
+      console.log("Something went wrong chief!");
+    }
+  } catch (err) {
+    console.error('Error fetching data:', err);
   }
-  else {
-    console.log("Something went wrong chief!");
-  }
-  
-  //potentialSpell['Right'];
-  //potentialSpell['Left'];
-  //sendData('potentialSpell', potentialSpell);
 }
 
 ////////////
@@ -182,7 +192,6 @@ class Game {
     this.id = 0;
     this.colliders = new Group();
     this.ripples = new Ripples();
-    this.bg_img = loadImage('img/gesture_grimoire_bg.jpg');
   }
 
   add(id, x, y, w, h) {
@@ -200,7 +209,6 @@ class Game {
   }
 
   draw() {
-    image(this.bg_img, 0, 0, this.w, this.h);
     this.checkBounds();
     this.ripples.draw();
     drawSprites();

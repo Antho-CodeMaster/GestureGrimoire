@@ -169,6 +169,14 @@ function draw() {
   }
 }
 
+function keyPressed() {
+  if (key === 'f') {
+    let potentialSpell = {'Right' : '1302', 'Left': '0123'};
+    sendData('potentialSpell', potentialSpell);
+    console.log(potentialSpell);
+  }
+}
+
 // Messages can be sent from a host to all connected clients
 function onReceiveData (data) {
   // Input data processing here. --->
