@@ -15,6 +15,7 @@ Run http-server -c-1 -p80 to start server on open port 80.
 // Network Settings
 // const serverIp      = 'https://yourservername.herokuapp.com';
 // const serverIp      = 'https://yourprojectname.glitch.me';
+const { getFromTable } = require('./server.js');
 const serverIp = '127.0.0.1';
 const serverPort = '3000';
 const local = true;   // true if running locally, false
@@ -149,9 +150,9 @@ function processButton(data) {
 }
 
 async function processSpell(data) {
-  QueryFirstCon = 'pos_gauche = ' . data['Left'];
-  QuerySecondCon = ' AND pos_droite = ' . data['Right'];
-  QueryBuild = QueryFirstCon . QuerySecondCon;
+  QueryFirstCon = 'pos_gauche = ' + data['Left'];
+  QuerySecondCon = ' AND pos_droite = ' + data['Right'];
+  QueryBuild = QueryFirstCon + QuerySecondCon;
   
   resultGet = await getFromTable('spell', '*', QueryBuild);
 
