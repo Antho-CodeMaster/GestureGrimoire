@@ -15,7 +15,6 @@ Run http-server -c-1 -p80 to start server on open port 80.
 // Network Settings
 // const serverIp      = 'https://yourservername.herokuapp.com';
 // const serverIp      = 'https://yourprojectname.glitch.me';
-const { getFromTable } = require('./server.js');
 const serverIp = '127.0.0.1';
 const serverPort = '3000';
 const local = true;   // true if running locally, false
@@ -26,11 +25,14 @@ const local = true;   // true if running locally, false
 const velScale = 10;
 const debug = true;
 let game;
-
 // <----
+let player1;
+let player2;
 
 function preload() {
-  setupHost();  
+  setupHost();
+  player1 = loadImage('img/wizard1.png');
+  player2 = loadImage('img/wizard2.png');
 }
 
 function setup() {
@@ -180,6 +182,7 @@ class Game {
     this.id = 0;
     this.colliders = new Group();
     this.ripples = new Ripples();
+    this.bg_img = loadImage('img/gesture_grimoire_bg.jpg');
   }
 
   add(id, x, y, w, h) {
@@ -197,6 +200,7 @@ class Game {
   }
 
   draw() {
+    image(this.bg_img, 0, 0, this.w, this.h);
     this.checkBounds();
     this.ripples.draw();
     drawSprites();
