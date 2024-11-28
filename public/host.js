@@ -26,14 +26,18 @@ const velScale = 10;
 const debug = true;
 let game;
 
+let player1;
+let player2;
+
 // <----
 
 function preload() {
-  setupHost();  
+  setupHost();
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+  this.bg_img = loadImage('img/gesture_grimoire_bg.jpg');
 
   // Host/Game setup here. ---->
 
@@ -47,7 +51,7 @@ function windowResized() {
 }
 
 function draw() {
-  background(15);
+  image(this.bg_img, 0, 0, windowWidth, windowHeight);
 
   if (isHostConnected(display = true)) {
     // Host/Game draw here. --->
@@ -171,12 +175,13 @@ async function processSpell(data) {
     const result = await response.json();
 
     if (result.success && result.data.length > 0) {
+      console.log("Spell Found!\n");
       console.log(result.data);
     } else {
-      console.log("Something went wrong chief!");
+      console.log("This spell does not exist!");
     }
   } catch (err) {
-    console.error('Error fetching data:', err);
+    console.error('Something went wrong chief! :', err);
   }
 }
 

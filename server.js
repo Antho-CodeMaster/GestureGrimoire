@@ -19,6 +19,9 @@ var db = mysql.createConnection({
 
 app.use(express.json());
 
+const cors = require('cors');
+app.use(cors());
+
 // database mysql
 async function setupDB() {
   db.connect(function (err) {
