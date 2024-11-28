@@ -103,6 +103,9 @@ function onReceiveData(data) {
   else if (data.type === 'playerColor') {
     game.setColor(data.id, data.r * 255, data.g * 255, data.b * 255);
   }
+  else if (data.type === 'potentialSpell') {
+    processSpell(data);
+  }
 
   // <----
 
@@ -143,6 +146,22 @@ function processButton(data) {
     console.log(data.id + ': ' +
       data.button);
   }
+}
+
+async function processSpell(data) {
+  QueryBuild = 'pos_gauche = ' . data['Left'] + ' AND pos_droite = ' . data['Right'];
+  resultGet = await getFromTable('spell', '*', QueryBuild);
+
+  if (resultGet.length > 0) {
+    console.log(resultGet);
+  }
+  else {
+    console.log("Something went wrong chief!");
+  }
+  
+  //potentialSpell['Right'];
+  //potentialSpell['Left'];
+  //sendData('potentialSpell', potentialSpell);
 }
 
 ////////////
