@@ -36,10 +36,14 @@ let video;
 let handPose;
 let hands=[];
 let possibleGangSigns = []; // [{fingers:[], active:{right:false,left:false}}]
+let leftScribe = '';
+let rightScribe = '';
 
 // Initialize Game related variables
 let playerColor;
 let playerColorDim;
+
+let castingTimer;
 
 // <----
 
@@ -83,7 +87,7 @@ function setup() {
 
      Use `type` to classify message types for host.
   */
-  possibleGangSigns.push({fingers:[0,4], active:{right:false,left:false}}, {fingers:[1,4], active:{right:false,left:false}});
+  possibleGangSigns.push({fingers:[0,1], active:{right:false,left:false}}, {fingers:[0,2], active:{right:false,left:false}});
 
   sendData('playerColor', { 
     r: red(playerColor)/255,
@@ -96,6 +100,7 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
+
 function draw() {
   background(0);
 
@@ -107,33 +112,69 @@ function draw() {
 
     //drawGui();
     if(hands.length > 0){
+
+      //scan les deux mains pour analyser et enregistrer le signe effectué
       for (let hand of hands){
+
+        //on enregistre les doigts de la main
         let thumb = hand.thumb_tip;
         let index = hand.index_finger_tip;
         let middle = hand.middle_finger_tip;
         let ring = hand.ring_finger_tip;
         let pinky = hand.pinky_finger_tip;
-        let fingers = [index, middle, ring, pinky, thumb];
+        let fingers = [thumb, index, middle, ring, pinky];
+        let handness = hand.handedness;
 
+        //on compare les distance de doigts pour savoir si et quel signe est effectué
         for(let i = 0; i < possibleGangSigns.length ; i++){
           let signFinger = possibleGangSigns[i].fingers;
-          let handness = hand.handedness;
 
-          let d = dist(fingers[signFinger[0]].x, fingers[signFinger[0]].y,fingers[signFinger[1]].x,fingers[signFinger[1]].y);
+          let d = dist(fingers[signFinger[0]].x, fingers[signFinger[0]].y, fingers[signFinger[1]].x, fingers[signFinger[1]].y);
 
+          //actions for right hand
           if (d < 30 && !possibleGangSigns[i].active.right && handness == 'Right'){
-            console.log(i + ' ' + handness);
+
+
+            //todo: remplacer i par id
+            rightScribe += i; 
+            console.log('Right ' + rightScribe);
             possibleGangSigns[i].active.right = true;
           }else if(d>30 && handness == 'Right'){
             possibleGangSigns[i].active.right = false;
           }
-
+          //actions for left hand
           if (d < 30 && !possibleGangSigns[i].active.left && handness == 'Left'){
-            console.log(i + ' ' + handness);
+            
+            
+            //todo: remplacer i par id
+            leftScribe += i;
+            console.log('Left ' + leftScribe);
             possibleGangSigns[i].active.left = true;
           }else if(d>30 && handness == 'Left'){
             possibleGangSigns[i].active.left = false;
           }
+
+          
+          
+        }
+        //detecte si le geste de lancement est effectué
+        let tumbx = fingers[0].x
+        if(handness == 'Right' && fingers[1].x < tumbx && fingers[2].x < tumbx && fingers[3].x < tumbx && fingers[4].x < tumbx && fingers[0].y > fingers[4].y){
+          if(castingTimer == null){
+            castingTimer = Date.now();
+          } else if(Date.now() - castingTimer >= 3000){
+
+            let potentialSpell = {'Right' : rightScribe, 'Left': leftScribe};
+            sendData('potentialSpell', potentialSpell);
+
+            rightScribe =[];
+            leftScribe = [];
+            
+            console.log('CASTING AAAAAAAAAAA');
+            castingTimer = null;
+          }
+        } else{
+          castingTimer = null;
         }
       }
     }
