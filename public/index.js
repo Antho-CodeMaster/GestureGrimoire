@@ -45,9 +45,11 @@ let playerColor;
 let playerColorDim;
 
 // <----
+let image_bg;
 
 function preload() {
   handPose = ml5.handPose({flipped: true});
+  image_bg = loadImage('img/wizardDesk.jpg');
   setupClient();
 }
 
@@ -71,6 +73,7 @@ function setup() {
   video = createCapture(VIDEO);
   video.hide();
   handPose.detectStart(video, gotHands);
+  background(image_bg,0);
   //setupUI();
 
   // <----
@@ -100,7 +103,7 @@ function windowResized() {
 }
 
 function draw() {
-  background(0);
+  background(image_bg,0);
 
   if(isClientConnected(display=true)) {
     // Client draw here. ---->
