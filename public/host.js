@@ -149,7 +149,10 @@ function processButton(data) {
 }
 
 async function processSpell(data) {
-  QueryBuild = 'pos_gauche = ' . data['Left'] + ' AND pos_droite = ' . data['Right'];
+  QueryFirstCon = 'pos_gauche = ' . data['Left'];
+  QuerySecondCon = ' AND pos_droite = ' . data['Right'];
+  QueryBuild = QueryFirstCon . QuerySecondCon;
+  
   resultGet = await getFromTable('spell', '*', QueryBuild);
 
   if (resultGet.length > 0) {
