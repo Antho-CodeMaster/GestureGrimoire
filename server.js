@@ -25,10 +25,12 @@ async function setupDB() {
   });
 
   /* EXEMPLE -select-
-  const resultGet = await getFromTable("spell", "name, target_is_self");  //variables : (table, column) (si tu ne mets pas de colonnes, tu les selectes toutes)
+  const resultGet = await getFromTable("spell", "name, target_is_self");  //variables : (table, column, where) (si tu ne mets pas de colonnes, tu les selectes toutes)
   console.log("///", resultGet);
-  const resultGetAll = await getFromTable("spell");  //variables : (table, column) (si tu ne mets pas de colonnes, tu les selectes toutes)
-  console.log("///", resultGetAll);*/
+  const resultGetAll = await getFromTable("spell");  //variables : (table, column, where) (si tu ne mets pas de colonnes, tu les selectes toutes)
+  console.log("///", resultGetAll);
+  const resultGetOne = await getFromTable("spell", '*', 'id = 1');  //variables : (table, column, where) (tu DOIS mettre une colonne, quitte à mettre '*', sinon le where ne fonctionnera pas.)
+  console.log("///", resultGetOne);*/
 
   /* EXEMPLE -insert-
   const resultInsert = await insertIntoTable("player", "color, hp, shield", "'pink', '88', '43'");  //variables : (table, columns, values)
@@ -40,8 +42,9 @@ async function setupDB() {
 
 }
 
-function getFromTable(table, column = '*') {
-  var req = "SELECT " + column + " FROM " + table;
+function getFromTable(table, column = '*', where = '') {
+  if(where != '') {where = ' WHERE ' + where}
+  var req = "SELECT " + column + " FROM " + table + where;
 
   return new Promise((resolve, reject) => {
     db.query(req, (err, result) => {
