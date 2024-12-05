@@ -17,6 +17,11 @@ var db = mysql.createConnection({
   database: "gesture_grimoire"
 });
 
+app.use(express.json());
+
+const cors = require('cors');
+app.use(cors());
+
 // database mysql
 async function setupDB() {
   db.connect(function (err) {
@@ -57,6 +62,19 @@ function getFromTable(table, column = '*', where = '') {
     });
   });
 }
+
+// Create an API endpoint for getFromTable
+app.post('/api/getFromTable', async (req, res) => {
+  const { table, column, where } = req.body;
+
+  try {
+    const result = await getFromTable(table, column, where);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Database query failed.' });
+  }
+});
 
 function insertIntoTable(table, columns, values) {
   var req = "INSERT INTO " + table + "(" + columns + ") VALUES (" + values + ")";
