@@ -46,10 +46,12 @@ let playerColorDim;
 
 // <----
 let image_bg;
+let scroll;
 
 function preload() {
   handPose = ml5.handPose({flipped: true});
   image_bg = loadImage('img/wizardDesk.jpg');
+  scroll = loadImage('img/scroll.jfif');
   setupClient();
 }
 
@@ -107,8 +109,9 @@ function draw() {
 
   if(isClientConnected(display=true)) {
     // Client draw here. ---->
-    translate(video.width, 0);
-    scale(-1,1)
+    
+    translate(windowWidth/2 + video.width /4, windowHeight/2 - video.height /4);
+    scale(-0.5,0.5);
     image(video,0,0);
 
     //drawGui();
