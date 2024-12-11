@@ -76,21 +76,7 @@ function setup() {
   video.hide();
   handPose.detectStart(video, gotHands);
   background(image_bg,0);
-  //setupUI();
-
-  // <----
-
-  // Send any initial setup data to your host here.
-  /* 
-    Example: 
-    sendData('myDataType', { 
-      val1: 0,
-      val2: 128,
-      val3: true
-    });
-
-     Use `type` to classify message types for host.
-  */
+  colorMode(RGB,1);
   possibleGangSigns.push(
     {fingers:[0,1], active:{right:false,left:false}}, 
     {fingers:[0,2], active:{right:false,left:false}},
@@ -109,6 +95,22 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
+function spiral(){
+  fill(1)
+  const radius =0.25;
+  const count = 20;
+  for(let i =0; i<count; i++){
+    const f = i / count;
+    const a = i;
+    const dist = a * radius;
+    const x = windowWidth/2 + cos(a* TWO_PI) * dist;
+    const y = windowHeight/2 + sin(a* TWO_PI) * dist;
+    const r = 0.001;
+    circle(x,y,r);
+
+  }
+}
+
 function draw() {
   background(image_bg,0);
 
@@ -118,6 +120,9 @@ function draw() {
     translate(windowWidth/2 + video.width /4, windowHeight/2 - video.height /4);
     scale(-0.5,0.5);
     image(video,0,0);
+    fill(1);
+    spiral();
+    
 
     //drawGui();
     positionHands();
