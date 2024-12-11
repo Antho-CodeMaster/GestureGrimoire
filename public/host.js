@@ -55,12 +55,12 @@ function setup() {
   // Host/Game setup here. ---->
 
   spriteW = [
-    28 * windowWidth / 100 - 50,
+    28 * windowWidth / 100 - 40,
     28 * windowWidth / 100 + 20,
   ];
 
   spriteH = [
-    65 * windowHeight / 100 - 20,
+    65 * windowHeight / 100 - 15,
     65 * windowHeight / 100 + 20,
   ];
 
@@ -70,7 +70,7 @@ function setup() {
   ];
 
   spriteY = [
-    (windowHeight - spriteH[0]) - (0.25 * windowHeight / 100) - 15,
+    (windowHeight - spriteH[0]) - (0.25 * windowHeight / 100) - 25,
     (windowHeight - spriteH[1]) - (0.25 * windowHeight / 100)
   ];
 
@@ -176,7 +176,7 @@ function processJoystick(data) {
 
 function processButton(data) {
   game.players[data.id].val = data.button;
-
+  
   game.createRipple(data.id, 300, 1000);
 
   if (debug) {
@@ -211,6 +211,8 @@ async function processSpell(data) {
       console.log("Spell Found!\n");
       console.log(result.data);
       game.createRipple(data.id, 300, 1000);
+      console.log("roo^;l",data);
+
     } else {
       console.log("This spell does not exist!");
     }
@@ -286,12 +288,12 @@ class Game {
     this.colliders.add(this.players[id]);
     print(this.players[id].id + " added.");
 
-    if (this.id == "0")
+   /* if (this.id == "0")
       //image(player2, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
       image(player2, 0, 0, spriteW[0], spriteH[0]);
     else if (this.id == "1")
       image(player1, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
-
+*/
     this.id++;
     this.numPlayers++;
 
