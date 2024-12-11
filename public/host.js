@@ -15,7 +15,6 @@ Run http-server -c-1 -p80 to start server on open port 80.
 // Network Settings
 // const serverIp      = 'https://yourservername.herokuapp.com';
 // const serverIp      = 'https://yourprojectname.glitch.me';
-const { getFromTable } = require('./server.js');
 
 const serverIp = '127.0.0.1';
 const serverPort = '3000';
@@ -103,22 +102,10 @@ function onClientConnect(data) {
 
   if (!game.checkId(data.id)) {
 
-   /* if (game.players.length == 0)
-      game.add(data.id, spriteW[0], spriteH[0], spriteX[0], spriteY[0]);
-    else
-      game.add(data.id, spriteW[1], spriteH[1], spriteX[1], spriteY[1]);*/
-
     if (game.players.length == 0)
       game.add(data.id, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
-    else
+    else if(game.players.length == 1)
       game.add(data.id, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
-
-
-    /*game.add(data.id,
-      random(0.25 * width, 0.75 * width),
-      random(0.25 * height, 0.75 * height),
-      60, 60
-    );*/
   }
 
   // <----
