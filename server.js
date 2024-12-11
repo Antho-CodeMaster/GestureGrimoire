@@ -76,6 +76,18 @@ app.post('/api/getFromTable', async (req, res) => {
   }
 });
 
+app.post('/api/insertPlayerData', async (req, res) => {
+  const { table, columns, values } = req.body;
+
+  try {
+    const result = await insertIntoTable(table, columns, values);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to insert player data.' });
+  }
+});
+
 function insertIntoTable(table, columns, values) {
   var req = "INSERT INTO " + table + "(" + columns + ") VALUES (" + values + ")";
 
