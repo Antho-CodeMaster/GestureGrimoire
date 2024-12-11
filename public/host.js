@@ -40,6 +40,15 @@ let spriteY;
 
 function preload() {
   setupHost();
+
+  player1 = loadImage('img/wizard1.png');
+  player2 = loadImage('img/wizard2.png');
+
+  this.bg_img = loadImage(
+    'img/gesture_grimoire_bg.jpg',
+    () => console.log('Image loaded successfully'),
+    () => console.error('Failed to load image')
+  );
 }
 
 function setup() {
@@ -101,11 +110,12 @@ function onClientConnect(data) {
   console.log(data.id + ' has connected.');
 
   if (!game.checkId(data.id)) {
-
-    if (game.players.length == 0)
+    if (game.numPlayers == 0)
       game.add(data.id, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
-    else if(game.players.length == 1)
+    else if(game.numPlayers == 1)
       game.add(data.id, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
+
+    console.log("Number of players: ", game.players.length);
   }
 
   // <----
@@ -204,11 +214,47 @@ async function processSpell(data) {
     if (result.success && result.data.length > 0) {
       console.log("Spell Found!\n");
       console.log(result.data);
+      game.createRipple(data.id, 300, 1000);
     } else {
       console.log("This spell does not exist!");
     }
   } catch (err) {
     console.error('Something went wrong chief! :', err);
+  }
+}
+
+async function savePlayerData(player, id) {
+  console.log(player);
+  if (player) {
+    const playerData = {
+      id: id,
+      color: `${red(player.color)},${green(player.color)},${blue(player.color)}`,
+      hp: player.hp || 100, // Default HP if not set
+      shield: player.shield || 50, // Default shield if not set
+    };
+
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/insertPlayerData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          table: 'player',
+          columns: 'id, color, hp, shield',
+          values: `'${playerData.id}', '${playerData.color}', ${playerData.hp}, ${playerData.shield}`,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log('Player data saved successfully:', playerData);
+      } else {
+        console.error('Failed to save player data:', result.error);
+      }
+    } catch (err) {
+      console.error('Error saving player data:', err);
+    }
   }
 }
 
@@ -239,10 +285,14 @@ class Game {
     this.players[id].shapeColor = color(255, 255, 255);
     this.players[id].scale = 1;
     this.players[id].mass = 1;
+    this.players[id].hp = 100; // Default HP
+    this.players[id].shield = 50; // Default shield
     this.colliders.add(this.players[id]);
     print(this.players[id].id + " added.");
     this.id++;
     this.numPlayers++;
+
+    savePlayerData(this.players[id], id); // Send player data to the database
   }
 
   draw() {
@@ -260,7 +310,7 @@ class Game {
       this.players[id].color);
   }
 
-  setColor(id, r, g, b) {
+  setColor(id, r, g, b) {    
     this.players[id].color = color(r, g, b);
     this.players[id].shapeColor = color(r, g, b);
 
