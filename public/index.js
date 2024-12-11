@@ -36,15 +36,22 @@ let video;
 let handPose;
 let hands=[];
 let possibleGangSigns = []; // [{fingers:[], active:{right:false,left:false}}]
+let leftScribe = '';
+let rightScribe = '';
+let castingTimer;
 
 // Initialize Game related variables
 let playerColor;
 let playerColorDim;
 
 // <----
+let image_bg;
+let scroll;
 
 function preload() {
   handPose = ml5.handPose({flipped: true});
+  image_bg = loadImage('img/wizardDesk.jpg');
+  scroll = loadImage('img/scroll.jfif');
   setupClient();
 }
 
@@ -68,6 +75,7 @@ function setup() {
   video = createCapture(VIDEO);
   video.hide();
   handPose.detectStart(video, gotHands);
+  background(image_bg,0);
   //setupUI();
 
   // <----
@@ -83,7 +91,12 @@ function setup() {
 
      Use `type` to classify message types for host.
   */
-  possibleGangSigns.push({fingers:[0,4], active:{right:false,left:false}}, {fingers:[1,4], active:{right:false,left:false}});
+  possibleGangSigns.push(
+    {fingers:[0,1], active:{right:false,left:false}}, 
+    {fingers:[0,2], active:{right:false,left:false}},
+    {fingers:[0,3], active:{right:false,left:false}},
+    {fingers:[0,4], active:{right:false,left:false}}
+  );
 
   sendData('playerColor', { 
     r: red(playerColor)/255,
@@ -97,47 +110,96 @@ function windowResized() {
 }
 
 function draw() {
-  background(0);
+  background(image_bg,0);
 
   if(isClientConnected(display=true)) {
     // Client draw here. ---->
-    translate(video.width, 0);
-    scale(-1,1)
+    
+    translate(windowWidth/2 + video.width /4, windowHeight/2 - video.height /4);
+    scale(-0.5,0.5);
     image(video,0,0);
 
     //drawGui();
-    if(hands.length > 0){
-      for (let hand of hands){
-        let thumb = hand.thumb_tip;
-        let index = hand.index_finger_tip;
-        let middle = hand.middle_finger_tip;
-        let ring = hand.ring_finger_tip;
-        let pinky = hand.pinky_finger_tip;
-        let fingers = [index, middle, ring, pinky, thumb];
+    positionHands();
+  }
+}
 
-        for(let i = 0; i < possibleGangSigns.length ; i++){
-          let signFinger = possibleGangSigns[i].fingers;
-          let handness = hand.handedness;
+function positionHands() {
+  if(hands.length > 0) {
+    for (let hand of hands) {
+      let thumb = hand.thumb_tip;
+      let index = hand.index_finger_tip;
+      let middle = hand.middle_finger_tip;
+      let ring = hand.ring_finger_tip;
+      let pinky = hand.pinky_finger_tip;
+      let fingers = [thumb, index, middle, ring, pinky];
+      let handness = hand.handedness;
 
-          let d = dist(fingers[signFinger[0]].x, fingers[signFinger[0]].y,fingers[signFinger[1]].x,fingers[signFinger[1]].y);
+      for(let i = 0; i < possibleGangSigns.length ; i++) {
+        let signFinger = possibleGangSigns[i].fingers;
 
-          if (d < 30 && !possibleGangSigns[i].active.right && handness == 'Right'){
-            console.log(i + ' ' + handness);
-            possibleGangSigns[i].active.right = true;
-          }else if(d>30 && handness == 'Right'){
-            possibleGangSigns[i].active.right = false;
-          }
+        let d = dist(fingers[signFinger[0]].x, fingers[signFinger[0]].y,fingers[signFinger[1]].x,fingers[signFinger[1]].y);
 
-          if (d < 30 && !possibleGangSigns[i].active.left && handness == 'Left'){
-            console.log(i + ' ' + handness);
-            possibleGangSigns[i].active.left = true;
-          }else if(d>30 && handness == 'Left'){
-            possibleGangSigns[i].active.left = false;
-          }
+        if (d < 30 && !possibleGangSigns[i].active.right && handness == 'Right') {
+          //todo: remplacer i par id
+          rightScribe += i; 
+          console.log('Right ' + rightScribe);
+          possibleGangSigns[i].active.right = true;
+        }
+        else if(d>30 && handness == 'Right') {
+          possibleGangSigns[i].active.right = false;
+        }
+
+        if (d < 30 && !possibleGangSigns[i].active.left && handness == 'Left') {
+           //todo: remplacer i par id
+           leftScribe += i;
+           console.log('Left ' + leftScribe);
+          possibleGangSigns[i].active.left = true;
+        }else if(d>30 && handness == 'Left') {
+          possibleGangSigns[i].active.left = false;
         }
       }
+
+      //detecte si le geste de lancement est effectué
+      let tumbx = fingers[0].x
+
+      if(handness == 'Right' && 
+        fingers[1].x < tumbx && 
+        fingers[2].x < tumbx && 
+        fingers[3].x < tumbx && 
+        fingers[4].x < tumbx && 
+        fingers[0].y > fingers[4].y) {   
+          castSpell();
+      }
     }
-    // <---
+  }
+}
+
+function castSpell() {
+  if(castingTimer == null) {
+    console.log('|~~ ----- CASTING RESET TIMER ----- ~~|\n');
+    castingTimer = Date.now();
+  } 
+  else if(Date.now() - castingTimer >= 3000 && (rightScribe != '' && leftScribe != '')) {
+    let potentialSpell = {'Right' : rightScribe, 'Left': leftScribe};
+    sendData('potentialSpell', potentialSpell);
+
+    rightScribe = [];
+    leftScribe = [];
+    
+    console.log('|~~ ----- CASTING SPELL ----- ~~|\n');
+    castingTimer = null;
+  }
+}
+
+function keyPressed() {
+  if (key === 'f') {
+    let potentialSpell = {'Right' : '1302', 'Left': '0123'};
+    sendData('potentialSpell', potentialSpell);
+    console.log(potentialSpell);
+  }
+  else if (key == 'c') {
+    castSpell()
   }
 }
 
