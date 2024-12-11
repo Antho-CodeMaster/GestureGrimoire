@@ -55,6 +55,7 @@ function windowResized() {
 
 function draw() {
   background(0);
+  //image(img, 0, 0, windowWidth, windowHeight);
 
   if(isClientConnected(display=true)) {
     // Client draw here. ---->

@@ -15,7 +15,7 @@ Run http-server -c-1 -p80 to start server on open port 80.
 // Network Settings
 // const serverIp      = 'https://yourservername.herokuapp.com';
 // const serverIp      = 'https://yourprojectname.glitch.me';
-const { getFromTable } = require('./server.js');
+
 const serverIp = '127.0.0.1';
 const serverPort = '3000';
 const local = true;   // true if running locally, false
@@ -30,6 +30,14 @@ let game;
 let player1;
 let player2;
 
+let spriteW;
+
+let spriteH;
+
+let spriteX;
+
+let spriteY;
+
 function preload() {
   setupHost();
   player1 = loadImage('img/wizard1.png');
@@ -40,6 +48,26 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
 
   // Host/Game setup here. ---->
+
+  spriteW = [
+    28*windowWidth/100 - 50,
+    28*windowWidth/100 + 20,
+  ];
+
+  spriteH = [
+    65*windowHeight/100 - 20,
+    65*windowHeight/100 + 20,
+  ];
+
+  spriteX = [
+    (25*windowWidth/100) - windowWidth,
+    windowWidth - (25*windowWidth/100) - windowWidth
+  ];
+
+  spriteY = [
+    (windowHeight - spriteH[0]) - (0.25*windowHeight/100) - 15,
+    (windowHeight - spriteH[1]) - (0.25*windowHeight/100)
+  ];
 
   game = new Game(width, height);
 
@@ -74,11 +102,23 @@ function onClientConnect(data) {
   console.log(data.id + ' has connected.');
 
   if (!game.checkId(data.id)) {
-    game.add(data.id,
+
+   /* if (game.players.length == 0)
+      game.add(data.id, spriteW[0], spriteH[0], spriteX[0], spriteY[0]);
+    else
+      game.add(data.id, spriteW[1], spriteH[1], spriteX[1], spriteY[1]);*/
+
+    if (game.players.length == 0)
+      game.add(data.id, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
+    else
+      game.add(data.id, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
+
+
+    /*game.add(data.id,
       random(0.25 * width, 0.75 * width),
       random(0.25 * height, 0.75 * height),
       60, 60
-    );
+    );*/
   }
 
   // <----
@@ -156,7 +196,7 @@ async function processSpell(data) {
   QueryFirstCon = 'pos_gauche = ' + data['Left'];
   QuerySecondCon = ' AND pos_droite = ' + data['Right'];
   QueryBuild = QueryFirstCon + QuerySecondCon;
-  
+
   resultGet = await getFromTable('spell', '*', QueryBuild);
 
   if (resultGet.length > 0) {
@@ -165,7 +205,7 @@ async function processSpell(data) {
   else {
     console.log("Something went wrong chief!");
   }
-  
+
   //potentialSpell['Right'];
   //potentialSpell['Left'];
   //sendData('potentialSpell', potentialSpell);
@@ -174,6 +214,7 @@ async function processSpell(data) {
 ////////////
 // Game
 // This simple placeholder game makes use of p5.play
+
 class Game {
   constructor(w, h) {
     this.w = w;
@@ -187,6 +228,10 @@ class Game {
   }
 
   add(id, x, y, w, h) {
+    //if(this.id == 0) {this.players[id] = createSprite(spriteW[0], spriteH[0], spriteX[0], spriteY[0]);}
+    // else if(this.id == 0) {this.players[id] = createSprite(spriteW[1], spriteH[1], spriteX[1], spriteY[1]);}
+    console.log("add, ", id, x, y, w, h, this.id);
+
     this.players[id] = createSprite(x, y, w, h);
     this.players[id].id = "p" + this.id;
     this.players[id].setCollider("rectangle", 0, 0, w, h);
