@@ -113,7 +113,7 @@ function draw() {
   background(image_bg,0);
 
   if(isClientConnected(display=true)) {
-    // Client draw here. ---->
+    // Client draw here. ----> 
     
     translate(windowWidth/2 + video.width /4, windowHeight/2 - video.height /4);
     scale(-0.5,0.5);

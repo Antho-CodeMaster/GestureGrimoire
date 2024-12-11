@@ -31,11 +31,8 @@ let player1;
 let player2;
 
 let spriteW;
-
 let spriteH;
-
 let spriteX;
-
 let spriteY;
 
 function preload() {
@@ -49,23 +46,23 @@ function setup() {
   // Host/Game setup here. ---->
 
   spriteW = [
-    28*windowWidth/100 - 50,
-    28*windowWidth/100 + 20,
+    28 * windowWidth / 100 - 50,
+    28 * windowWidth / 100 + 20,
   ];
 
   spriteH = [
-    65*windowHeight/100 - 20,
-    65*windowHeight/100 + 20,
+    65 * windowHeight / 100 - 20,
+    65 * windowHeight / 100 + 20,
   ];
 
   spriteX = [
-    (25*windowWidth/100) - windowWidth,
-    windowWidth - (25*windowWidth/100) - windowWidth
+    (25 * windowWidth / 100) - windowWidth,
+    windowWidth - (25 * windowWidth / 100) - windowWidth
   ];
 
   spriteY = [
-    (windowHeight - spriteH[0]) - (0.25*windowHeight/100) - 15,
-    (windowHeight - spriteH[1]) - (0.25*windowHeight/100)
+    (windowHeight - spriteH[0]) - (0.25 * windowHeight / 100) - 15,
+    (windowHeight - spriteH[1]) - (0.25 * windowHeight / 100)
   ];
 
   game = new Game(width, height);
@@ -101,11 +98,12 @@ function onClientConnect(data) {
   console.log(data.id + ' has connected.');
 
   if (!game.checkId(data.id)) {
-
-    if (game.players.length == 0)
+    if (game.numPlayers == 0)
       game.add(data.id, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
-    else if(game.players.length == 1)
+    else if (game.numPlayers == 1)
       game.add(data.id, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
+
+    console.log("Number of players: ", game.players.length);
   }
 
   // <----
@@ -183,7 +181,7 @@ async function processSpell(data) {
   QueryFirstCon = 'pos_gauche = ' + data['Left'];
   QuerySecondCon = ' AND pos_droite = ' + data['Right'];
   QueryBuild = QueryFirstCon + QuerySecondCon;
-  
+
   try {
     // Send a POST request to the server to fetch data
     const response = await fetch('http://127.0.0.1:3000/api/getFromTable', {
@@ -204,6 +202,12 @@ async function processSpell(data) {
     if (result.success && result.data.length > 0) {
       console.log("Spell Found!\n");
       console.log(result.data);
+      if (result.data['target_is_self'] == 1)
+        game.createRipple(data.id, 300, 1000);
+
+      console.log("quel player:(((", data, game); //#################
+
+
     } else {
       console.log("This spell does not exist!");
     }
@@ -241,6 +245,13 @@ class Game {
     this.players[id].mass = 1;
     this.colliders.add(this.players[id]);
     print(this.players[id].id + " added.");
+
+    if (this.id == "0")
+      //image(player2, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
+      image(player2, 0, 0, spriteW[0], spriteH[0]);
+    else if (this.id == "1")
+      image(player1, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
+
     this.id++;
     this.numPlayers++;
   }
