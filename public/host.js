@@ -61,6 +61,9 @@ function setup() {
   ];
 
   game = new Game(width, height, getGameId(), getGameRoomId());
+
+  console.log("GAME ID : ", getGameId());
+  console.log("ROOM ID : ", getGameRoomId()); 
 }
 
 function windowResized() {
@@ -181,7 +184,8 @@ async function processSpell(data) {
       console.log("Spell Found!\n");
       console.log(result.data);
 
-      game.createRipple(data['id'], 800, 800)
+      castSpell(result.data[0], data.id);
+      game.createRipple(data['id'], 800, 800);
     } else {
       console.log("This spell does not exist!");
     }
