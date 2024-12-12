@@ -117,7 +117,7 @@ function spiral(posX,posY){
     //Calcul de la couleur
       //main gauche
     if(leftScribe.length > i){
-      let hue = Number(leftScribe[i])/5;
+      let hue = Number(leftScribe[i])/4;
 
       //const trans = 0.6 * sig + 0.25;
       let clr = color(hue, 1, 1, 0.75);
@@ -133,7 +133,7 @@ function spiral(posX,posY){
 
       //main droite
     if(rightScribe.length > i){
-      let hue = Number(rightScribe[i])/5;
+      let hue = Number(rightScribe[i])/4;
 
       //const trans = 0.6 * sig + 0.25;
       let clr = color(hue, 1, 1, 0.75);
