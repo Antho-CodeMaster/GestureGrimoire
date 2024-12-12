@@ -25,6 +25,7 @@ const local         = true;   // true if running locally, false
 
 // Global variables here. ---->
 
+
 // Initialize GUI related variables
 let gui         = null;
 let button      = null;
@@ -365,7 +366,6 @@ function keyPressed() {
 // Messages can be sent from a host to all connected clients
 function onReceiveData (data) {
   // Input data processing here. --->
-
   if (data.type === 'timestamp') {
     print(data.timestamp);
   }
@@ -373,10 +373,10 @@ function onReceiveData (data) {
     spellList = data.data;
     console.log(data.data);
   }
-  if (data.type === 'updatePlayerStats'){
-    hp = data.data['hp'];
-    shield = data.data['shield'];
-    console.log(data);
+  if (data.type === 'updatePlayerStats' && data.targetId == id){
+    hp = data.hp;
+    shield = data.shield;
+    console.log('hp: '+ hp);
   }
   // <----
 
