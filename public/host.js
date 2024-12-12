@@ -82,6 +82,24 @@ function draw() {
     // Display server address
     displayAddress();
   }
+
+  for (let id in game.players) {
+    //hostHealthBar(game.players[id]['position']['x'], game.players[id]['position']['y'], game.players[id]['hp'], game.players[id]['shield']);
+    //hostHealthBar(game.players[id]['position']['x'], game.players[id]['position']['y'], game.players[id]['hp'], game.players[id]['shield']);
+    let x = (game.players[id]['position']['x']) - (game.players[id]['width'] / 2);
+    let y = game.players[id]['position']['y'] - (game.players[id]['height'] / 2) - 40;
+    hostHealthBar(x, y, game.players[id]['hp'], game.players[id]['shield']);
+  }
+}
+
+async function hostHealthBar(posX, posY, hp, shield, w, h){
+  //barre de vie
+  fill(0, 255, 0);
+  rect(posX,posY - 35, spriteW[0] * hp/100, 30,8);
+
+  //barre shield
+  fill(200, 50, 50);
+  rect(posX,posY, map(hp + shield, 0, 100, 0,  spriteW[0] * shield/100), 10,8);
 }
 
 function onClientConnect(data) {
@@ -230,9 +248,9 @@ function castSpell(spell, playerId) {
   const targetId = getOpponentId(attackerId); // Determine the opponent's ID
 
   if (game.players[targetId]) {
-      applyDamage(game.players[targetId], spell);
+    applyDamage(game.players[targetId], spell);
 
-      appendGameHistory(attackerId, spell);
+    appendGameHistory(attackerId, spell);
   }
 }
 
@@ -247,13 +265,13 @@ function applyDamage(target, spell) {
 
   // Calculate damage to shield and health
   if (updatedShield > 0) {
-      updatedShield -= spell.attack;
-      if (updatedShield < 0) {
-          updatedHp += updatedShield; // Apply overflow damage to health
-          updatedShield = 0;
-      }
+    updatedShield -= spell.attack;
+    if (updatedShield < 0) {
+      updatedHp += updatedShield; // Apply overflow damage to health
+      updatedShield = 0;
+    }
   } else {
-      updatedHp -= spell.attack;
+    updatedHp -= spell.attack;
   }
 
   // Ensure HP doesn't drop below 0
@@ -265,8 +283,8 @@ function applyDamage(target, spell) {
 
   // Optionally handle death logic
   if (updatedHp <= 0) {
-      console.log(`Player ${target.id} has been defeated!`);
-      saveGame(getOpponentId(target.id), target.id);
+    console.log(`Player ${target.id} has been defeated!`);
+    saveGame(getOpponentId(target.id), target.id);
   }
 
   // Log for debugging
@@ -277,9 +295,9 @@ function applyDamage(target, spell) {
 
   // Optionally send updated stats to clients /*
   sendData('updatePlayerStats', {
-      id: target.id,
-      hp: updatedHp,
-      shield: updatedShield,
+    id: target.id,
+    hp: updatedHp,
+    shield: updatedShield,
   });
 }
 
@@ -288,34 +306,34 @@ function updatePlayerStats(playerId, hp, shield) {
 
   // Execute both updates
   Promise.all([
-      updateStat('player', 'hp', hp, whereCondition),
-      updateStat('player', 'shield', shield, whereCondition),
+    updateStat('player', 'hp', hp, whereCondition),
+    updateStat('player', 'shield', shield, whereCondition),
   ])
-      .then(() => {
-          console.log(`Player ${playerId} stats successfully updated in the database.`);
-      })
-      .catch((err) => {
-          console.error(`Failed to update player ${playerId} stats in the database: ${err}`);
-      });
+    .then(() => {
+      console.log(`Player ${playerId} stats successfully updated in the database.`);
+    })
+    .catch((err) => {
+      console.error(`Failed to update player ${playerId} stats in the database: ${err}`);
+    });
 }
 
 function updateStat(table, column, value, whereCondition) {
   return fetch('http://127.0.0.1:3000/api/updateTable', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-          table: table,
-          column: column,
-          newvalue: value,
-          where: whereCondition,
-      }),
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      table: table,
+      column: column,
+      newvalue: value,
+      where: whereCondition,
+    }),
   }).then((response) => {
-      if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      return response.json();
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return response.json();
   });
 }
 
@@ -323,7 +341,7 @@ async function appendGameHistory(attackerId, spell) {
   if (game) {
     const gameHistData = {
       id_game: game.id,
-      playerId: attackerId, 
+      playerId: attackerId,
       spellId: spell.id,
     };
     console.log("Game history saving...\n", gameHistData);
@@ -356,7 +374,7 @@ async function appendGameHistory(attackerId, spell) {
 async function createGameSave(id, roomId) {
   const gameData = {
     id: id,
-    roomId: roomId, 
+    roomId: roomId,
     score: 0,
   };
   console.log("Creating game save...\n", gameData);
@@ -390,14 +408,14 @@ function saveGame(winnerId, opponentId) {
 
   // Execute both updates
   Promise.all([
-      updateStat('game', 'winner', `'${winnerId}'`, whereCondition),
-      updateStat('game', 'opponent', `'${opponentId}'`, whereCondition),
+    updateStat('game', 'winner', `'${winnerId}'`, whereCondition),
+    updateStat('game', 'opponent', `'${opponentId}'`, whereCondition),
   ])
-      .then(() => {
-          console.log(`Game ${game.id} stats successfully updated in the database.`);
-      })
-      .catch((err) => {
-          console.error(`Failed to update game ${game.id} stats in the database: ${err}`);
-      });
+    .then(() => {
+      console.log(`Game ${game.id} stats successfully updated in the database.`);
+    })
+    .catch((err) => {
+      console.error(`Failed to update game ${game.id} stats in the database: ${err}`);
+    });
 }
 
