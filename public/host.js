@@ -142,8 +142,6 @@ function processButton(data) {
   }
 }
 
-
-
 async function processSpell(data) {
   QueryFirstCon = 'pos_gauche = ' + data['Left'];
   QuerySecondCon = ' AND pos_droite = ' + data['Right'];
@@ -167,8 +165,8 @@ async function processSpell(data) {
     const result = await response.json();
 
     if (result.success && result.data.length > 0) {
-      console.log("Spell Found!\n");
-      console.log(result.data);
+      console.log("Spell Found!\n", result.data);
+      castSpell(result.data[0], data.id);
     } else {
       console.log("This spell does not exist!");
     }
@@ -210,4 +208,95 @@ async function savePlayerData(player, id) {
       console.error('Error saving player data:', err);
     }
   }
+}
+
+function castSpell(spell, playerId) {
+  const attackerId = playerId; // ID of the player casting the spell
+  const targetId = getOpponentId(attackerId); // Determine the opponent's ID
+
+  if (game.players[targetId]) {
+      applyDamage(game.players[targetId], spell.attack);
+  }
+}
+
+function getOpponentId(attackerId) {
+  const playerIds = Object.keys(game.players);
+  return playerIds.find(id => id !== attackerId);
+}
+
+function applyDamage(target, attackValue) {
+  let updatedHp = target.hp;
+  let updatedShield = target.shield;
+
+  // Calculate damage to shield and health
+  if (updatedShield > 0) {
+      updatedShield -= attackValue;
+      if (updatedShield < 0) {
+          updatedHp += updatedShield; // Apply overflow damage to health
+          updatedShield = 0;
+      }
+  } else {
+      updatedHp -= attackValue;
+  }
+
+  // Ensure HP doesn't drop below 0
+  if (updatedHp < 0) updatedHp = 0;
+
+  // Update local game state
+  target.hp = updatedHp;
+  target.shield = updatedShield;
+
+  // Optionally handle death logic
+  if (updatedHp <= 0) {
+      console.log(`Player ${target.id} has been defeated!`);
+  }
+
+  // Log for debugging
+  console.log(`Target ${target.id} updated locally. HP: ${updatedHp}, Shield: ${updatedShield}`);
+
+  // Call to update database (non-blocking)
+  updatePlayerStats(target.id, updatedHp, updatedShield);
+
+  // Optionally send updated stats to clients /*
+  sendData('updatePlayerStats', {
+      id: target.id,
+      hp: updatedHp,
+      shield: updatedShield,
+  });
+}
+
+function updatePlayerStats(playerId, hp, shield) {
+  const whereCondition = `id = '${playerId}'`;
+
+  // Execute both updates
+  Promise.all([
+      updateStat('player', 'hp', hp, whereCondition),
+      updateStat('player', 'shield', shield, whereCondition),
+  ])
+      .then(() => {
+          console.log(`Player ${playerId} stats successfully updated in the database.`);
+      })
+      .catch((err) => {
+          console.error(`Failed to update player ${playerId} stats in the database: ${err}`);
+      });
+}
+
+function updateStat(table, column, value, whereCondition) {
+  return fetch('http://127.0.0.1:3000/api/updateTable', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+          table: table,
+          column: column,
+          newvalue: value,
+          where: whereCondition,
+      }),
+  }).then((response) => {
+      if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+  });
 }

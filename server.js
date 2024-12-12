@@ -103,6 +103,18 @@ function insertIntoTable(table, columns, values) {
   });
 }
 
+app.post('/api/updateTable', async (req, res) => {
+  const { table, column, newvalue, where } = req.body;
+
+  try {
+      const result = await updateTable(table, column, newvalue, where);
+      res.json({ success: true, result });
+  } catch (err) {
+      console.error(`Error updating table: ${err}`);
+      res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 function updateTable(table, column, newvalue, where) {
   var req = "UPDATE " + table + " SET " + column + " = " + newvalue + " WHERE " + where;
 
