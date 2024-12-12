@@ -374,9 +374,9 @@ function onReceiveData (data) {
     console.log(data.data);
   }
   if (data.type === 'updatePlayerStats'){
-    hp = data.data['hp'];
+    hp = data.hp;
     shield = data.data['shield'];
-    console.log(data);
+    console.log(data.hp);
   }
   // <----
 
