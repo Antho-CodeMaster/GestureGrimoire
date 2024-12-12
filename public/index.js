@@ -66,6 +66,8 @@ function gotHands(results){
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
+  
+
   // Client setup here. ---->
   
   //gui = createGui();
@@ -76,21 +78,7 @@ function setup() {
   video.hide();
   handPose.detectStart(video, gotHands);
   background(image_bg,0);
-  //setupUI();
 
-  // <----
-
-  // Send any initial setup data to your host here.
-  /* 
-    Example: 
-    sendData('myDataType', { 
-      val1: 0,
-      val2: 128,
-      val3: true
-    });
-
-     Use `type` to classify message types for host.
-  */
   possibleGangSigns.push(
     {fingers:[0,1], active:{right:false,left:false}}, 
     {fingers:[0,2], active:{right:false,left:false}},
@@ -103,17 +91,131 @@ function setup() {
     g: green(playerColor)/255,
     b: blue(playerColor)/255
   });
+  noStroke();
+  colorMode(HSB,1);
 } 
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
+
+function spiral(posX,posY){
+
+  const count = (leftScribe.length >= rightScribe.length ? leftScribe.length : rightScribe.length);
+  //const radius =160;
+  const radius = (20 * count) <= 160 ?  20 * count: 160;
+  
+  for(let i =0; i< count; i++){
+    const f = i / count;
+    const a = f;
+    const dist = a * radius;
+    const x =  0.5 + cos(a* TWO_PI) * dist;
+    const y =  0.5 + sin(a* TWO_PI) * dist;
+    const r = 20;
+
+    //Calcul de la couleur
+      //main gauche
+    if(leftScribe.length > i){
+      let hue = Number(leftScribe[i])/5;
+
+      //const trans = 0.6 * sig + 0.25;
+      let clr = color(hue, 1, 1, 0.75);
+      fill(clr);
+
+      circle(posX + x,posY + y,r);
+    } else{
+      let clr = color(0,0,0,0);
+      fill(clr);
+
+      circle(posX + x,posY + y,r);
+    }
+
+      //main droite
+    if(rightScribe.length > i){
+      let hue = Number(rightScribe[i])/5;
+
+      //const trans = 0.6 * sig + 0.25;
+      let clr = color(hue, 1, 1, 0.75);
+      fill(clr);
+
+      circle(posX + -x,posY + -y,r);
+    } else{
+      let clr = color(0,0,0,0);
+      fill(clr);
+
+      circle(posX + -x,posY + -y,r);
+    }
+
+    
+
+  }
+}
+
+
+
+function cosn(v) {
+  return cos(v * TWO_PI) * 0.5 + 0.5;
+}
+
+function invCosn(v) {
+  return 1 - cosn(v);
+}
+
+function fract(x){
+  return x - Math.floor(x);
+}
+
+
+const PHI = (1 + Math.sqrt(5)) / 2;
+const dotSize = 60;
+
+let t;
+let startFrame = -1;
+const frames = 200;
+const animationLenght = 3000;
+
+function spiralAnimation(posX, posY){
+  //t = fract((frameCount - startFrame) / frames);
+  t = fract((Date.now() - castingTimer) / animationLenght);
+
+  const radAn = Math.sqrt(windowWidth**2 + windowHeight**2)/2;
+
+  const count = 4000 * invCosn(t);
+  for(let i =0; i< count; i++){
+    //position des points
+    const f = i / count;
+    const a = i * PHI;
+    const dist = f * radAn;
+    const x =  posX + cos(a* TWO_PI) * dist;
+    const y =  posY + sin(a* TWO_PI) * dist;
+
+    //taille des points
+    const sig = pow(cosn(f-t *6),2);
+    const r = t * f * dotSize;
+
+    //Calcul de la couleur
+    const hue = fract(t + f * 0.5);
+    const sat = 1;
+    const light = 1;//0.6 * sig + 0.25;
+    const clr = color(hue, sat, light);
+    fill(clr);
+
+
+    circle(x,y,r);
+
+  }
+
+}
+
+
 function draw() {
   background(image_bg,0);
 
   if(isClientConnected(display=true)) {
     // Client draw here. ----> 
+    scale(1,1);
+    spiral(windowWidth*3/4,windowHeight/2);
     
     translate(windowWidth/2 + video.width /4, windowHeight/2 - video.height /4);
     scale(-0.5,0.5);
@@ -169,7 +271,17 @@ function positionHands() {
         fingers[3].x < tumbx && 
         fingers[4].x < tumbx && 
         fingers[0].y > fingers[4].y) {   
+
+          
           castSpell();
+         
+          scale(-2,2);
+          spiralAnimation(-video.width /4,video.height /4);
+          
+          
+      } else if(handness == 'Right'){
+        castingTimer = null;
+        startFrame = frameCount;
       }
     }
   }
@@ -188,6 +300,9 @@ function castSpell() {
     leftScribe = [];
     
     console.log('|~~ ----- CASTING SPELL ----- ~~|\n');
+    castingTimer = null;
+  }
+  else if (Date.now() - castingTimer >= 3000){
     castingTimer = null;
   }
 }
