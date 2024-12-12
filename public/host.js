@@ -91,6 +91,10 @@ function draw() {
 }
 
 async function hostHealthBar(posX, posY, hp, shield){
+  //barre complete dessous
+  fill(0, 0, 0);
+  rect(posX,posY - 35, (spriteW[0] / 2), 30,8);
+
   //barre de vie
   fill(0, 255, 0);
   rect(posX,posY - 35, (spriteW[0] / 2) * hp/100, 30,8);
