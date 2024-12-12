@@ -84,22 +84,20 @@ function draw() {
   }
 
   for (let id in game.players) {
-    //hostHealthBar(game.players[id]['position']['x'], game.players[id]['position']['y'], game.players[id]['hp'], game.players[id]['shield']);
-    //hostHealthBar(game.players[id]['position']['x'], game.players[id]['position']['y'], game.players[id]['hp'], game.players[id]['shield']);
-    let x = (game.players[id]['position']['x']) - (game.players[id]['width'] / 2);
+    let x = (game.players[id]['position']['x']) - (game.players[id]['width'] / 4);
     let y = game.players[id]['position']['y'] - (game.players[id]['height'] / 2) - 40;
     hostHealthBar(x, y, game.players[id]['hp'], game.players[id]['shield']);
   }
 }
 
-async function hostHealthBar(posX, posY, hp, shield, w, h){
+async function hostHealthBar(posX, posY, hp, shield){
   //barre de vie
   fill(0, 255, 0);
-  rect(posX,posY - 35, spriteW[0] * hp/100, 30,8);
+  rect(posX,posY - 35, (spriteW[0] / 2) * hp/100, 30,8);
 
   //barre shield
   fill(200, 50, 50);
-  rect(posX,posY, map(hp + shield, 0, 100, 0,  spriteW[0] * shield/100), 10,8);
+  rect(posX,posY, map(hp + shield, 0, 100, 0,  (spriteW[0] / 2) * shield/100), 10,8);
 }
 
 function onClientConnect(data) {
