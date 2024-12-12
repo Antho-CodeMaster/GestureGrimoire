@@ -28,7 +28,7 @@ class Ripple {
         this.endTime = this.startTime + this.duration;
     }
 
-    draw() {
+    draw() {      
         let progress = (this.endTime - millis()) / this.duration;
         let r = this.r * (1 - progress);
 
