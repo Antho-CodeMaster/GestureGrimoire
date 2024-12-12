@@ -302,7 +302,7 @@ function applyDamage(target, spell) {
 
   // Optionally send updated stats to clients /*
   sendData('updatePlayerStats', {
-    id: target.id,
+    targetId: target.id,
     hp: updatedHp,
     shield: updatedShield,
   });
