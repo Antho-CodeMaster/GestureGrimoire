@@ -61,6 +61,9 @@ function setup() {
   ];
 
   game = new Game(width, height, getGameId(), getGameRoomId());
+
+  console.log("GAME ID : ", getGameId());
+  console.log("ROOM ID : ", getGameRoomId()); 
 }
 
 function windowResized() {
@@ -91,6 +94,10 @@ function draw() {
 }
 
 async function hostHealthBar(posX, posY, hp, shield){
+  //barre complete dessous
+  fill(0, 0, 0);
+  rect(posX,posY - 35, (spriteW[0] / 2), 30,8);
+
   //barre de vie
   fill(0, 255, 0);
   rect(posX,posY - 35, (spriteW[0] / 2) * hp/100, 30,8);
@@ -198,7 +205,8 @@ async function processSpell(data) {
       console.log("Spell Found!\n");
       console.log(result.data);
 
-      game.createRipple(data['id'], 800, 800)
+      castSpell(result.data[0], data.id);
+      game.createRipple(data['id'], 800, 800);
     } else {
       console.log("This spell does not exist!");
     }
