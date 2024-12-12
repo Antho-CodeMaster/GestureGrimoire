@@ -11,13 +11,28 @@ class Player {
         this.velocity = createVector(0, 0);
 
         // Determine sprite based on index
-        const spriteImages = [player2, player1];
+        const spriteImages = [playerLeft, playerRight];
         this.sprite = createSprite(x, y, w, h);
         this.sprite.addImage(spriteImages[index % spriteImages.length]);
 
         // Set initial sprite attributes
         this.sprite.scale = 0.5;
         this.sprite.shapeColor = this.color;
+
+        this.healthBar()
+    }
+
+    healthBar() {
+        //outline
+        stroke(0);
+        strokeWeight(4);
+        noFill();
+        rect(this.position.x - (this.w / 2), this.position.y - (this.h / 2), spriteW[0], 15);
+        
+        //hp
+        noStroke();
+        fill(this.color, 0, 0);
+        rect(this.position.x - (this.w / 2), this.position.y - (this.h / 2), map(this.hp + this.shield, 0, 100, 0, 200), 15);
     }
 
     setVelocity(velX, velY) {

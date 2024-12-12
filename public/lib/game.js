@@ -73,4 +73,13 @@ class Game {
         }
         pop();
     }
+
+    createRipple(id, r, duration) {
+        this.ripples.add(
+            this.players[id].position.x,
+            this.players[id].position.y,
+            r,
+            duration,
+            this.players[id].color);
+    }
 }

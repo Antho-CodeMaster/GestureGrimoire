@@ -26,27 +26,39 @@ const local = true;   // true if running locally, false
 const velScale = 10;
 const debug = true;
 
-let player1;
-let player2;
+let playerRight;
+let playerLeft;
 
 let spriteW, spriteH, spriteX, spriteY;
 
 function preload() {
   setupHost();
 
-  player1 = loadImage('img/wizard1.png');
-  player2 = loadImage('img/wizard2.png');
-  
+  playerRight = loadImage('img/wizard1.png');
+  playerLeft = loadImage('img/wizard2.png');
+
   this.bg_img = loadImage('img/gesture_grimoire_bg.jpg');
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  spriteW = 50; // Width of the sprites
-  spriteH = 50; // Height of the sprites
-  spriteX = [width / 4, (3 * width) / 4];
-  spriteY = [height / 2, height / 2];
+  spriteW = [
+    28 * windowWidth / 100 - 50,
+    28 * windowWidth / 100 + 20,
+  ];
+  spriteH = [
+    65 * windowHeight / 100 - 20,
+    65 * windowHeight / 100 + 20,
+  ];
+  spriteX = [
+    (25 * windowWidth / 100),
+    windowWidth - (25 * windowWidth / 100)
+  ];
+  spriteY = [
+    (windowHeight - (spriteH[0] / 1.5)) - (0.25 * windowHeight / 100) - 15,
+    (windowHeight - (spriteH[1] / 1.5)) - (0.25 * windowHeight / 100)
+  ];
 
   game = new Game(width, height, getGameId(), getGameRoomId());
 }
@@ -78,10 +90,12 @@ function onClientConnect(data) {
 
   if (!game.players[data.id]) {
     const playerIndex = game.numPlayers;
-    const x = spriteX[playerIndex % spriteX.length];
-    const y = spriteY[playerIndex % spriteY.length];
-    game.add(data.id, x, y, spriteW, spriteH);
-
+    // const x = spriteX[playerIndex % spriteX.length];
+    // const y = spriteY[playerIndex % spriteY.length];
+    if (game.numPlayers == 0)
+      game.add(data.id, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
+    else if (game.numPlayers == 1)
+      game.add(data.id, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
   }
 }
 
@@ -130,16 +144,16 @@ function processJoystick(data) {
   }
 }
 
-function processButton(data) {
+/*&function processButton(data) {
   game.players[data.id].val = data.button;
-
+  
   game.createRipple(data.id, 300, 1000);
 
   if (debug) {
     console.log(data.id + ': ' +
       data.button);
   }
-}
+}*/
 
 async function processSpell(data) {
   QueryFirstCon = 'pos_gauche = ' + data['Left'];
@@ -164,8 +178,10 @@ async function processSpell(data) {
     const result = await response.json();
 
     if (result.success && result.data.length > 0) {
-      console.log("Spell Found!\n", result.data);
-      castSpell(result.data[0], data.id);
+      console.log("Spell Found!\n");
+      console.log(result.data);
+
+      game.createRipple(data['id'], 800, 800)
     } else {
       console.log("This spell does not exist!");
     }
