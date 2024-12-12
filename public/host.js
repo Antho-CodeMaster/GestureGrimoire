@@ -25,58 +25,42 @@ const local = true;   // true if running locally, false
 
 const velScale = 10;
 const debug = true;
-let game;
 
-let player1;
-let player2;
+let playerRight;
+let playerLeft;
 
-let spriteW;
-let spriteH;
-let spriteX;
-let spriteY;
+let spriteW, spriteH, spriteX, spriteY;
 
 function preload() {
   setupHost();
 
-  player1 = loadImage('img/wizard1.png');
-  player2 = loadImage('img/wizard2.png');
+  playerRight = loadImage('img/wizard1.png');
+  playerLeft = loadImage('img/wizard2.png');
 
-  this.bg_img = loadImage(
-    'img/gesture_grimoire_bg.jpg',
-    () => console.log('Image loaded successfully'),
-    () => console.error('Failed to load image')
-  );
+  this.bg_img = loadImage('img/gesture_grimoire_bg.jpg');
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  this.bg_img = loadImage('img/gesture_grimoire_bg.jpg');
-
-  // Host/Game setup here. ---->
 
   spriteW = [
     28 * windowWidth / 100 - 50,
     28 * windowWidth / 100 + 20,
   ];
-
   spriteH = [
     65 * windowHeight / 100 - 20,
     65 * windowHeight / 100 + 20,
   ];
-
   spriteX = [
-    (25 * windowWidth / 100) - windowWidth,
-    windowWidth - (25 * windowWidth / 100) - windowWidth
+    (25 * windowWidth / 100),
+    windowWidth - (25 * windowWidth / 100)
   ];
-
   spriteY = [
-    (windowHeight - spriteH[0]) - (0.25 * windowHeight / 100) - 15,
-    (windowHeight - spriteH[1]) - (0.25 * windowHeight / 100)
+    (windowHeight - (spriteH[0] / 1.5)) - (0.25 * windowHeight / 100) - 15,
+    (windowHeight - (spriteH[1] / 1.5)) - (0.25 * windowHeight / 100)
   ];
 
-  game = new Game(width, height);
-
-  // <----
+  game = new Game(width, height, getGameId(), getGameRoomId());
 }
 
 function windowResized() {
@@ -95,8 +79,6 @@ function draw() {
     // Update and draw game objects
     game.draw();
 
-    // <----
-
     // Display server address
     displayAddress();
   }
@@ -106,15 +88,15 @@ function onClientConnect(data) {
   // Client connect logic here. --->
   console.log(data.id + ' has connected.');
 
-  if (!game.checkId(data.id)) {
+  if (!game.players[data.id]) {
+    const playerIndex = game.numPlayers;
+    // const x = spriteX[playerIndex % spriteX.length];
+    // const y = spriteY[playerIndex % spriteY.length];
     if (game.numPlayers == 0)
       game.add(data.id, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
     else if (game.numPlayers == 1)
       game.add(data.id, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
-
   }
-
-  // <----
 }
 
 function onClientDisconnect(data) {
@@ -123,8 +105,6 @@ function onClientDisconnect(data) {
   if (game.checkId(data.id)) {
     game.remove(data.id);
   }
-
-  // <----
 }
 
 function onReceiveData(data) {
@@ -143,16 +123,6 @@ function onReceiveData(data) {
   else if (data.type === 'potentialSpell') {
     processSpell(data);
   }
-
-  // <----
-
-  /* Example:
-     if (data.type === 'myDataType') {
-       processMyData(data);
-     }
-
-     Use `data.type` to get the message type sent by client.
-  */
 }
 
 // This is included for testing purposes to demonstrate that
@@ -174,16 +144,16 @@ function processJoystick(data) {
   }
 }
 
-function processButton(data) {
+/*&function processButton(data) {
   game.players[data.id].val = data.button;
-
+  
   game.createRipple(data.id, 300, 1000);
 
   if (debug) {
     console.log(data.id + ': ' +
       data.button);
   }
-}
+}*/
 
 async function processSpell(data) {
   QueryFirstCon = 'pos_gauche = ' + data['Left'];
@@ -210,7 +180,8 @@ async function processSpell(data) {
     if (result.success && result.data.length > 0) {
       console.log("Spell Found!\n");
       console.log(result.data);
-      game.createRipple(data.id, 300, 1000);
+
+      game.createRipple(data['id'], 800, 800)
     } else {
       console.log("This spell does not exist!");
     }
@@ -230,7 +201,7 @@ async function savePlayerData(player, id) {
     };
 
     try {
-      const response = await fetch('http://127.0.0.1:3000/api/insertPlayerData', {
+      const response = await fetch('http://127.0.0.1:3000/api/insertData', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -254,186 +225,179 @@ async function savePlayerData(player, id) {
   }
 }
 
-////////////
-// Game
-// This simple placeholder game makes use of p5.play
+function castSpell(spell, playerId) {
+  const attackerId = playerId; // ID of the player casting the spell
+  const targetId = getOpponentId(attackerId); // Determine the opponent's ID
 
-class Game {
-  constructor(w, h) {
-    this.w = w;
-    this.h = h;
-    this.players = {};
-    this.numPlayers = 0;
-    this.id = 0;
-    this.colliders = new Group();
-    this.ripples = new Ripples();
+  if (game.players[targetId]) {
+      applyDamage(game.players[targetId], spell);
+
+      appendGameHistory(attackerId, spell);
   }
+}
 
-  add(id, x, y, w, h) {
-    //if(this.id == 0) {this.players[id] = createSprite(spriteW[0], spriteH[0], spriteX[0], spriteY[0]);}
-    // else if(this.id == 0) {this.players[id] = createSprite(spriteW[1], spriteH[1], spriteX[1], spriteY[1]);}
-    console.log("add, ", id, x, y, w, h, this.id);
+function getOpponentId(attackerId) {
+  const playerIds = Object.keys(game.players);
+  return playerIds.find(id => id !== attackerId);
+}
 
-    this.players[id] = createSprite(x, y, w, h);
-    this.players[id].id = "p" + this.id;
-    this.players[id].setCollider("rectangle", 0, 0, w, h);
-    this.players[id].color = color(255, 255, 255);
-    this.players[id].shapeColor = color(255, 255, 255);
-    this.players[id].scale = 1;
-    this.players[id].mass = 1;
-    this.players[id].hp = 100; // Default HP
-    this.players[id].shield = 50; // Default shield
-    this.colliders.add(this.players[id]);
-    print(this.players[id].id + " added.");
+function applyDamage(target, spell) {
+  let updatedHp = target.hp;
+  let updatedShield = target.shield;
 
-    if (this.id == "0")
-      //image(player2, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
-      image(player2, 0, 0, spriteW[0], spriteH[0]);
-    else if (this.id == "1")
-      image(player1, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
-
-    this.id++;
-    this.numPlayers++;
-
-    savePlayerData(this.players[id], id); // Send player data to the database
-  }
-
-  draw() {
-    this.checkBounds();
-    this.ripples.draw();
-    drawSprites();
-  }
-
-  createRipple(id, r, duration) {
-    this.ripples.add(
-      this.players[id].position.x,
-      this.players[id].position.y,
-      r,
-      duration,
-      this.players[id].color);
-  }
-
-  setColor(id, r, g, b) {    
-    this.players[id].color = color(r, g, b);
-    this.players[id].shapeColor = color(r, g, b);
-
-    print(this.players[id].id + " color added.");
-  }
-
-  remove(id) {
-    this.colliders.remove(this.players[id]);
-    this.players[id].remove();
-    delete this.players[id];
-    this.numPlayers--;
-  }
-
-  checkId(id) {
-    if (id in this.players) { return true; }
-    else { return false; }
-  }
-
-  printPlayerIds(x, y) {
-    push();
-    noStroke();
-    fill(255);
-    textSize(16);
-    text("# players: " + this.numPlayers, x, y);
-
-    y = y + 16;
-    fill(200);
-    for (let id in this.players) {
-      text(this.players[id].id, x, y);
-      y += 16;
-    }
-
-    pop();
-  }
-
-  setVelocity(id, velx, vely) {
-    this.players[id].velocity.x = velx;
-    this.players[id].velocity.y = vely;
-  }
-
-  checkBounds() {
-    for (let id in this.players) {
-
-      if (this.players[id].position.x < 0) {
-        this.players[id].position.x = this.w - 1;
+  // Calculate damage to shield and health
+  if (updatedShield > 0) {
+      updatedShield -= spell.attack;
+      if (updatedShield < 0) {
+          updatedHp += updatedShield; // Apply overflow damage to health
+          updatedShield = 0;
       }
+  } else {
+      updatedHp -= spell.attack;
+  }
 
-      if (this.players[id].position.x > this.w) {
-        this.players[id].position.x = 1;
-      }
+  // Ensure HP doesn't drop below 0
+  if (updatedHp < 0) updatedHp = 0;
 
-      if (this.players[id].position.y < 0) {
-        this.players[id].position.y = this.h - 1;
-      }
+  // Update local game state
+  target.hp = updatedHp;
+  target.shield = updatedShield;
 
-      if (this.players[id].position.y > this.h) {
-        this.players[id].position.y = 1;
+  // Optionally handle death logic
+  if (updatedHp <= 0) {
+      console.log(`Player ${target.id} has been defeated!`);
+      saveGame(getOpponentId(target.id), target.id);
+  }
+
+  // Log for debugging
+  console.log(`Target ${target.id} updated locally. HP: ${updatedHp}, Shield: ${updatedShield}`);
+
+  // Call to update database (non-blocking)
+  updatePlayerStats(target.id, updatedHp, updatedShield);
+
+  // Optionally send updated stats to clients /*
+  sendData('updatePlayerStats', {
+      id: target.id,
+      hp: updatedHp,
+      shield: updatedShield,
+  });
+}
+
+function updatePlayerStats(playerId, hp, shield) {
+  const whereCondition = `id = '${playerId}'`;
+
+  // Execute both updates
+  Promise.all([
+      updateStat('player', 'hp', hp, whereCondition),
+      updateStat('player', 'shield', shield, whereCondition),
+  ])
+      .then(() => {
+          console.log(`Player ${playerId} stats successfully updated in the database.`);
+      })
+      .catch((err) => {
+          console.error(`Failed to update player ${playerId} stats in the database: ${err}`);
+      });
+}
+
+function updateStat(table, column, value, whereCondition) {
+  return fetch('http://127.0.0.1:3000/api/updateTable', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+          table: table,
+          column: column,
+          newvalue: value,
+          where: whereCondition,
+      }),
+  }).then((response) => {
+      if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
       }
+      return response.json();
+  });
+}
+
+async function appendGameHistory(attackerId, spell) {
+  if (game) {
+    const gameHistData = {
+      id_game: game.id,
+      playerId: attackerId, 
+      spellId: spell.id,
+    };
+    console.log("Game history saving...\n", gameHistData);
+
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/insertData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          table: 'gamehistory',
+          columns: 'id_game, id_player, spell',
+          values: `'${gameHistData.id_game}', '${gameHistData.playerId}', ${gameHistData.spellId}`,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log('Game history saved successfully:', gameHistData);
+      } else {
+        console.error('Failed to save game history data:', result.error);
+      }
+    } catch (err) {
+      console.error('Error saving game history data:', err);
     }
   }
 }
 
-// A simple pair of classes for generating ripples
-class Ripples {
-  constructor() {
-    this.ripples = [];
-  }
+async function createGameSave(id, roomId) {
+  const gameData = {
+    id: id,
+    roomId: roomId, 
+    score: 0,
+  };
+  console.log("Creating game save...\n", gameData);
 
-  add(x, y, r, duration, rcolor) {
-    this.ripples.push(new Ripple(x, y, r, duration, rcolor));
-  }
+  try {
+    const response = await fetch('http://127.0.0.1:3000/api/insertData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        table: 'game',
+        columns: 'id, roomId, score',
+        values: `'${gameData.id}', '${gameData.roomId}', ${gameData.score}`,
+      }),
+    });
 
-  draw() {
-    for (let i = 0; i < this.ripples.length; i++) {
-      // Draw each ripple in the array
-      if (this.ripples[i].draw()) {
-        // If the ripple is finished (returns true), remove it
-        this.ripples.splice(i, 1);
-      }
+    const result = await response.json();
+    if (result.success) {
+      console.log('Game data saved successfully:', gameData);
+    } else {
+      console.error('Failed to create game save:', result.error);
     }
+  } catch (err) {
+    console.error('Error creating game save:', err);
   }
 }
 
-class Ripple {
-  constructor(x, y, r, duration, rcolor) {
-    this.x = x;
-    this.y = y;
-    this.r = r;
+function saveGame(winnerId, opponentId) {
+  const whereCondition = `id = '${game.id}'`;
 
-    // If rcolor is not defined, default to white
-    if (rcolor == null) {
-      rcolor = color(255);
-    }
-
-    this.stroke = rcolor;
-    this.strokeWeight = 3;
-
-    this.duration = duration;   // in milliseconds
-    this.startTime = millis();
-    this.endTime = this.startTime + this.duration;
-  }
-
-  draw() {
-    let progress = (this.endTime - millis()) / this.duration;
-    let r = this.r * (1 - progress);
-
-    push();
-    stroke(red(this.stroke),
-      green(this.stroke),
-      blue(this.stroke),
-      255 * progress);
-    strokeWeight(this.strokeWeight);
-    fill(0, 0);
-    ellipse(this.x, this.y, r);
-    pop();
-
-    if (millis() > this.endTime) {
-      return true;
-    }
-
-    return false;
-  }
+  // Execute both updates
+  Promise.all([
+      updateStat('game', 'winner', `'${winnerId}'`, whereCondition),
+      updateStat('game', 'opponent', `'${opponentId}'`, whereCondition),
+  ])
+      .then(() => {
+          console.log(`Game ${game.id} stats successfully updated in the database.`);
+      })
+      .catch((err) => {
+          console.error(`Failed to update game ${game.id} stats in the database: ${err}`);
+      });
 }
+

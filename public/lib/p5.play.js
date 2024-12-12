@@ -1645,16 +1645,13 @@ http://molleindustria.org/
       }
       else {
         noStroke();
-   /*
-        console.log(this._x, this._y, this._w, this._h, this._internalWidth, this._internalHeight, this.id);
-
+   
+        console.log("id----", this.id);
+        
         if (this.id == "p0")
-          //image(player2, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
-          //image(player2, 0, 0, spriteW[0], spriteH[0]);
-          console.log("yeeeeeeeeee");
-          
+          image(playerLeft, spriteX[0], spriteY[0], spriteW[0], spriteH[0]);
         else
-          image(player1, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);*/
+          image(playerRight, spriteX[1], spriteY[1], spriteW[1], spriteH[1]);
       }
     };
 
