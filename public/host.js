@@ -25,7 +25,6 @@ const local = true;   // true if running locally, false
 
 const velScale = 10;
 const debug = true;
-let game;
 
 let playerRight;
 let playerLeft;
@@ -61,7 +60,7 @@ function setup() {
     (windowHeight - (spriteH[1] / 1.5)) - (0.25 * windowHeight / 100)
   ];
 
-  game = new Game(width, height);
+  game = new Game(width, height, getGameId(), getGameRoomId());
 }
 
 function windowResized() {
@@ -156,8 +155,6 @@ function processJoystick(data) {
   }
 }*/
 
-
-
 async function processSpell(data) {
   QueryFirstCon = 'pos_gauche = ' + data['Left'];
   QuerySecondCon = ' AND pos_droite = ' + data['Right'];
@@ -204,7 +201,7 @@ async function savePlayerData(player, id) {
     };
 
     try {
-      const response = await fetch('http://127.0.0.1:3000/api/insertPlayerData', {
+      const response = await fetch('http://127.0.0.1:3000/api/insertData', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -227,3 +224,180 @@ async function savePlayerData(player, id) {
     }
   }
 }
+
+function castSpell(spell, playerId) {
+  const attackerId = playerId; // ID of the player casting the spell
+  const targetId = getOpponentId(attackerId); // Determine the opponent's ID
+
+  if (game.players[targetId]) {
+      applyDamage(game.players[targetId], spell);
+
+      appendGameHistory(attackerId, spell);
+  }
+}
+
+function getOpponentId(attackerId) {
+  const playerIds = Object.keys(game.players);
+  return playerIds.find(id => id !== attackerId);
+}
+
+function applyDamage(target, spell) {
+  let updatedHp = target.hp;
+  let updatedShield = target.shield;
+
+  // Calculate damage to shield and health
+  if (updatedShield > 0) {
+      updatedShield -= spell.attack;
+      if (updatedShield < 0) {
+          updatedHp += updatedShield; // Apply overflow damage to health
+          updatedShield = 0;
+      }
+  } else {
+      updatedHp -= spell.attack;
+  }
+
+  // Ensure HP doesn't drop below 0
+  if (updatedHp < 0) updatedHp = 0;
+
+  // Update local game state
+  target.hp = updatedHp;
+  target.shield = updatedShield;
+
+  // Optionally handle death logic
+  if (updatedHp <= 0) {
+      console.log(`Player ${target.id} has been defeated!`);
+      saveGame(getOpponentId(target.id), target.id);
+  }
+
+  // Log for debugging
+  console.log(`Target ${target.id} updated locally. HP: ${updatedHp}, Shield: ${updatedShield}`);
+
+  // Call to update database (non-blocking)
+  updatePlayerStats(target.id, updatedHp, updatedShield);
+
+  // Optionally send updated stats to clients /*
+  sendData('updatePlayerStats', {
+      id: target.id,
+      hp: updatedHp,
+      shield: updatedShield,
+  });
+}
+
+function updatePlayerStats(playerId, hp, shield) {
+  const whereCondition = `id = '${playerId}'`;
+
+  // Execute both updates
+  Promise.all([
+      updateStat('player', 'hp', hp, whereCondition),
+      updateStat('player', 'shield', shield, whereCondition),
+  ])
+      .then(() => {
+          console.log(`Player ${playerId} stats successfully updated in the database.`);
+      })
+      .catch((err) => {
+          console.error(`Failed to update player ${playerId} stats in the database: ${err}`);
+      });
+}
+
+function updateStat(table, column, value, whereCondition) {
+  return fetch('http://127.0.0.1:3000/api/updateTable', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+          table: table,
+          column: column,
+          newvalue: value,
+          where: whereCondition,
+      }),
+  }).then((response) => {
+      if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+  });
+}
+
+async function appendGameHistory(attackerId, spell) {
+  if (game) {
+    const gameHistData = {
+      id_game: game.id,
+      playerId: attackerId, 
+      spellId: spell.id,
+    };
+    console.log("Game history saving...\n", gameHistData);
+
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/insertData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          table: 'gamehistory',
+          columns: 'id_game, id_player, spell',
+          values: `'${gameHistData.id_game}', '${gameHistData.playerId}', ${gameHistData.spellId}`,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log('Game history saved successfully:', gameHistData);
+      } else {
+        console.error('Failed to save game history data:', result.error);
+      }
+    } catch (err) {
+      console.error('Error saving game history data:', err);
+    }
+  }
+}
+
+async function createGameSave(id, roomId) {
+  const gameData = {
+    id: id,
+    roomId: roomId, 
+    score: 0,
+  };
+  console.log("Creating game save...\n", gameData);
+
+  try {
+    const response = await fetch('http://127.0.0.1:3000/api/insertData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        table: 'game',
+        columns: 'id, roomId, score',
+        values: `'${gameData.id}', '${gameData.roomId}', ${gameData.score}`,
+      }),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      console.log('Game data saved successfully:', gameData);
+    } else {
+      console.error('Failed to create game save:', result.error);
+    }
+  } catch (err) {
+    console.error('Error creating game save:', err);
+  }
+}
+
+function saveGame(winnerId, opponentId) {
+  const whereCondition = `id = '${game.id}'`;
+
+  // Execute both updates
+  Promise.all([
+      updateStat('game', 'winner', `'${winnerId}'`, whereCondition),
+      updateStat('game', 'opponent', `'${opponentId}'`, whereCondition),
+  ])
+      .then(() => {
+          console.log(`Game ${game.id} stats successfully updated in the database.`);
+      })
+      .catch((err) => {
+          console.error(`Failed to update game ${game.id} stats in the database: ${err}`);
+      });
+}
+
