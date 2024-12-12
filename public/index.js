@@ -18,13 +18,12 @@ Run http-server -c-1 -p80 to start server on open port 80.
 // Network Settings
 // const serverIp      = 'https://yourservername.herokuapp.com';
 // const serverIp      = 'https://yourprojectname.glitch.me';
-const serverIp      = '192.168.12.21';
+const serverIp      = '127.0.0.1';
 const serverPort    = '3000';
 const local         = true;   // true if running locally, false
                               // if running on remote server
 
 // Global variables here. ---->
-
 
 // Initialize GUI related variables
 let gui         = null;
@@ -366,6 +365,7 @@ function keyPressed() {
 // Messages can be sent from a host to all connected clients
 function onReceiveData (data) {
   // Input data processing here. --->
+
   if (data.type === 'timestamp') {
     print(data.timestamp);
   }
@@ -373,10 +373,10 @@ function onReceiveData (data) {
     spellList = data.data;
     console.log(data.data);
   }
-  if (data.type === 'updatePlayerStats' && data.targetId == id){
-    hp = data.hp;
-    shield = data.shield;
-    console.log('hp: '+ hp);
+  if (data.type === 'updatePlayerStats'){
+    hp = data.data['hp'];
+    shield = data.data['shield'];
+    console.log(data);
   }
   // <----
 
