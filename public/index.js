@@ -12,6 +12,8 @@ Run http-server -c-1 -p80 to start server on open port 80.
 
 */
 
+//const { text } = require("express");
+
 ////////////
 // Network Settings
 // const serverIp      = 'https://yourservername.herokuapp.com';
@@ -47,6 +49,10 @@ let playerColorDim;
 // <----
 let image_bg;
 let scroll_img;
+let spellList = [];
+
+let hp = 100;
+let shield = 0;
 
 function preload() {
   handPose = ml5.handPose({flipped: true});
@@ -215,8 +221,11 @@ function draw() {
   if(isClientConnected(display=true)) {
     // Client draw here. ----> 
     scale(1,1);
-    image(scroll_img,100,100,width/4, 7*height/8);
+    image(scroll_img,100,20,width/4, 15*height/16);
     spiral(windowWidth*3/4,windowHeight/2);
+
+    drawList();
+    drawCoolBars();
     
     translate(windowWidth/2 + video.width /4, windowHeight/2 - video.height /4);
     scale(-0.5,0.5);
@@ -358,7 +367,15 @@ function onReceiveData (data) {
   if (data.type === 'timestamp') {
     print(data.timestamp);
   }
-
+  if(data.type === 'spellList'){
+    spellList = data.data;
+    console.log(data.data);
+  }
+  if (data.type === 'updatePlayerStats'){
+    hp = data.data['hp'];
+    shield = data.data['shield'];
+    console.log(data);
+  }
   // <----
 
   /* Example:
@@ -466,4 +483,35 @@ function onButtonPress() {
 function touchMoved() {
   // do some stuff
   return false;
+}
+function drawVeryConciseSpellExplanationForTheClientYesThereIsIronyInThisName(spell,index){
+  let clr = color(1,0,0,1);
+  fill(clr);
+  text(spell['name'] + ' Left: ' + spell['pos_gauche']+ ' Right: ' + spell['pos_droite'],150,200 + index * 20);
+}
+function drawList(){
+  noStroke();
+  textSize(15);
+  spellList.forEach(drawVeryConciseSpellExplanationForTheClientYesThereIsIronyInThisName);
+}
+
+async function drawCoolBars(){
+  let posX = windowWidth/3;
+  let posY = windowHeight * 3 / 4;
+
+  //rouge dessous
+  let clr = color(1,1,1);
+  fill(clr);
+  rect(posX,posY, posX, 30,8);
+
+  //barre de vie
+  clr = color(0.33,1,1);
+  fill(clr);
+  rect(posX,posY, posX * hp/100, 30,8);
+
+  //barre shield
+  clr = color(0.1,1,1);
+  fill(clr);
+  rect(posX,posY - 20, posX * shield/100 , 10,8);
+
 }
