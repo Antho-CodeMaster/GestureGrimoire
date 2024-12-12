@@ -89,6 +89,14 @@ function displayAddress() {
   pop();
 }
 
+function getGameId() {
+  return id;
+}
+
+function getGameRoomId() {
+  return roomId;
+}
+
 ////////////
 // CLIENT
 

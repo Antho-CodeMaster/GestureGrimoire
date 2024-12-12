@@ -1,11 +1,15 @@
 class Game {
-    constructor(w, h) {
+    constructor(w, h, id, roomId) {
         this.w = w;
         this.h = h;
+        this.id = id;
+        this.roomId = roomId;
         this.players = {};
         this.numPlayers = 0;
         this.colliders = new Group();
         this.ripples = new Ripples();
+
+        createGameSave(id, roomId);
     }
 
     add(id, x, y, w, h) {

@@ -25,7 +25,6 @@ const local = true;   // true if running locally, false
 
 const velScale = 10;
 const debug = true;
-let game;
 
 let player1;
 let player2;
@@ -49,7 +48,7 @@ function setup() {
   spriteX = [width / 4, (3 * width) / 4];
   spriteY = [height / 2, height / 2];
 
-  game = new Game(width, height);
+  game = new Game(width, height, getGameId(), getGameRoomId());
 }
 
 function windowResized() {
@@ -186,7 +185,7 @@ async function savePlayerData(player, id) {
     };
 
     try {
-      const response = await fetch('http://127.0.0.1:3000/api/insertPlayerData', {
+      const response = await fetch('http://127.0.0.1:3000/api/insertData', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,7 +214,9 @@ function castSpell(spell, playerId) {
   const targetId = getOpponentId(attackerId); // Determine the opponent's ID
 
   if (game.players[targetId]) {
-      applyDamage(game.players[targetId], spell.attack);
+      applyDamage(game.players[targetId], spell);
+
+      appendGameHistory(attackerId, spell);
   }
 }
 
@@ -224,19 +225,19 @@ function getOpponentId(attackerId) {
   return playerIds.find(id => id !== attackerId);
 }
 
-function applyDamage(target, attackValue) {
+function applyDamage(target, spell) {
   let updatedHp = target.hp;
   let updatedShield = target.shield;
 
   // Calculate damage to shield and health
   if (updatedShield > 0) {
-      updatedShield -= attackValue;
+      updatedShield -= spell.attack;
       if (updatedShield < 0) {
           updatedHp += updatedShield; // Apply overflow damage to health
           updatedShield = 0;
       }
   } else {
-      updatedHp -= attackValue;
+      updatedHp -= spell.attack;
   }
 
   // Ensure HP doesn't drop below 0
@@ -249,6 +250,7 @@ function applyDamage(target, attackValue) {
   // Optionally handle death logic
   if (updatedHp <= 0) {
       console.log(`Player ${target.id} has been defeated!`);
+      saveGame(getOpponentId(target.id), target.id);
   }
 
   // Log for debugging
@@ -300,3 +302,86 @@ function updateStat(table, column, value, whereCondition) {
       return response.json();
   });
 }
+
+async function appendGameHistory(attackerId, spell) {
+  if (game) {
+    const gameHistData = {
+      id_game: game.id,
+      playerId: attackerId, 
+      spellId: spell.id,
+    };
+    console.log("Game history saving...\n", gameHistData);
+
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/insertData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          table: 'gamehistory',
+          columns: 'id_game, id_player, spell',
+          values: `'${gameHistData.id_game}', '${gameHistData.playerId}', ${gameHistData.spellId}`,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log('Game history saved successfully:', gameHistData);
+      } else {
+        console.error('Failed to save game history data:', result.error);
+      }
+    } catch (err) {
+      console.error('Error saving game history data:', err);
+    }
+  }
+}
+
+async function createGameSave(id, roomId) {
+  const gameData = {
+    id: id,
+    roomId: roomId, 
+    score: 0,
+  };
+  console.log("Creating game save...\n", gameData);
+
+  try {
+    const response = await fetch('http://127.0.0.1:3000/api/insertData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        table: 'game',
+        columns: 'id, roomId, score',
+        values: `'${gameData.id}', '${gameData.roomId}', ${gameData.score}`,
+      }),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      console.log('Game data saved successfully:', gameData);
+    } else {
+      console.error('Failed to create game save:', result.error);
+    }
+  } catch (err) {
+    console.error('Error creating game save:', err);
+  }
+}
+
+function saveGame(winnerId, opponentId) {
+  const whereCondition = `id = '${game.id}'`;
+
+  // Execute both updates
+  Promise.all([
+      updateStat('game', 'winner', `'${winnerId}'`, whereCondition),
+      updateStat('game', 'opponent', `'${opponentId}'`, whereCondition),
+  ])
+      .then(() => {
+          console.log(`Game ${game.id} stats successfully updated in the database.`);
+      })
+      .catch((err) => {
+          console.error(`Failed to update game ${game.id} stats in the database: ${err}`);
+      });
+}
+

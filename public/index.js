@@ -201,7 +201,7 @@ function keyPressed() {
     rightScribe = [];
     leftScribe = [];
   }
-  if (key === 'g') {
+  else if (key === 'g') {
     let potentialSpell = {'Right' : '2301', 'Left': '1023'};
     sendData('potentialSpell', potentialSpell);
     console.log(potentialSpell);
@@ -209,7 +209,7 @@ function keyPressed() {
     rightScribe = [];
     leftScribe = [];
   }
-  if (key === 'h') {
+  else if (key === 'h') {
     let potentialSpell = {'Right' : '1320', 'Left': '2103'};
     sendData('potentialSpell', potentialSpell);
     console.log(potentialSpell);
@@ -217,11 +217,16 @@ function keyPressed() {
     rightScribe = [];
     leftScribe = [];
   }
-  if (key === 'j') {
+  else if (key === 'j') {
     let potentialSpell = {'Right' : '1230', 'Left': '0312'};
     sendData('potentialSpell', potentialSpell);
     console.log(potentialSpell);
 
+    rightScribe = [];
+    leftScribe = [];
+  }
+  else if (key == 'r') {
+    console.log("Resetting hands");
     rightScribe = [];
     leftScribe = [];
   }
