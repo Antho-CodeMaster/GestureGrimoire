@@ -75,6 +75,7 @@ function draw() {
 function onClientConnect(data) {
   // Client connect logic here. --->
   console.log(data.id + ' has connected.');
+  getSpellList();
 
   if (!game.players[data.id]) {
     const playerIndex = game.numPlayers;
@@ -385,3 +386,33 @@ function saveGame(winnerId, opponentId) {
       });
 }
 
+async function getSpellList(){
+  try {
+    // Send a POST request to the server to fetch data
+    const response = await fetch('http://127.0.0.1:3000/api/getFromTable', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        table: 'spell',
+        column: '*',
+        where: '',
+      }),
+    });
+
+    // Parse the JSON response
+    const result = await response.json();
+
+    if (result.success && result.data.length > 0) {
+      console.log("Spells Found!\n", result.data);
+      sendData('spellList',{
+        data: result.data,
+      });
+    } else {
+      console.log("No spells found in database! You'll have to rely on plain old science!");
+    }
+  } catch (err) {
+    console.error('Something went wrong chief! :', err);
+  }
+}
